@@ -8,7 +8,7 @@ import (
 	modules "github.com/codetheuri/poster-gen/internal/app"
 
 	authModule "github.com/codetheuri/poster-gen/internal/app/auth"
-	postersModule "github.com/codetheuri/poster-gen/internal/app/modules/posters"
+	postersModule "github.com/codetheuri/poster-gen/internal/app/posters"
 	router "github.com/codetheuri/poster-gen/internal/app/routers"
 
 	"github.com/codetheuri/poster-gen/internal/platform/database"

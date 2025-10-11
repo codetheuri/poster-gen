@@ -73,7 +73,7 @@ func ConflictError(message string, err error) AppError {
 	return New("CONFLICT_ERROR", message, err)
 }
 
-// validation issues
+// validation errors
 func ValidationError(message string, err error, fieldErrors interface{}) AppError {
 	return &appError{
 		code:             "VALIDATION_ERROR",
@@ -106,4 +106,13 @@ func InternalServerError(message string, err error) AppError {
 // external service error
 func ExternalServiceError(message string, err error) AppError {
 	return New("EXTERNAL_SERVICE_ERROR", message, err)
+}
+
+// pkg/errors/errors.go (add these functions)
+func BadRequestError(message string, err error) AppError {
+    return New("BAD_REQUEST", message, err)
+}
+
+func PaymentError(message string, err error) AppError {
+    return New("PAYMENT_ERROR", message, err)
 }

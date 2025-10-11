@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	appErrors "github.com/codetheuri/todolist/pkg/errors"
-	"github.com/codetheuri/todolist/pkg/pagination"
-	"github.com/codetheuri/todolist/pkg/validators"
+	appErrors "github.com/codetheuri/poster-gen/pkg/errors"
+	"github.com/codetheuri/poster-gen/pkg/pagination"
+	"github.com/codetheuri/poster-gen/pkg/validators"
 )
 
 // SendJSON writes the given status code and data as JSON to the http.ResponseWriter.
@@ -108,7 +108,7 @@ func RespondData(w http.ResponseWriter, statusCode int, data interface{}, messag
 		opt(&resp)
 	}
 	SendJSON(w, statusCode, resp)
-	
+
 }
 func RespondListData(w http.ResponseWriter, statusCode int, data interface{}, p *pagination.Metadata) {
 	resp := SuccessResponse{
@@ -117,8 +117,7 @@ func RespondListData(w http.ResponseWriter, statusCode int, data interface{}, p 
 			Pagination: p,
 		},
 	}
-	
-	
+
 	SendJSON(w, statusCode, resp)
 }
 func RespondMessage(w http.ResponseWriter, statusCode int, message string, theme string, typ interface{}) {
@@ -142,7 +141,7 @@ func WithSuccessTheme(theme string) SuccessOption {
 		}
 		resp.AlertifyPayload.Theme = theme
 	}
-}	
+}
 func WithSuccessType(typ interface{}) SuccessOption {
 	return func(resp *SuccessResponse) {
 		if resp.AlertifyPayload == nil {
@@ -173,11 +172,11 @@ func WithoutSuccess() SuccessOption {
 		resp.AlertifyPayload = nil
 	}
 }
- func WithMetadata(data interface{}) SuccessOption {
+func WithMetadata(data interface{}) SuccessOption {
 	return func(resp *SuccessResponse) {
 		resp.Metadata = data
 	}
- }
+}
 
 // for error options
 type AlertifyOption func(*APIErrorResponse)

@@ -1,6 +1,6 @@
 package web
 
-import "github.com/codetheuri/todolist/pkg/pagination"
+import "github.com/codetheuri/poster-gen/pkg/pagination"
 
 type AlertifyPayload struct {
 	Message string      `json:"message"`
@@ -17,7 +17,7 @@ type Datapayload struct {
 
 // with pagination
 type ListDatapayload struct {
-	Data       interface{}            `json:"data"`
+	Data       interface{}          `json:"data"`
 	Pagination *pagination.Metadata `json:"pagination"`
 }
 

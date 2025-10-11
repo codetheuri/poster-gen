@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/codetheuri/todolist/pkg/logger"
+	"github.com/codetheuri/poster-gen/pkg/logger"
 )
 
 func Logger(log logger.Logger) func(next http.Handler) http.Handler {

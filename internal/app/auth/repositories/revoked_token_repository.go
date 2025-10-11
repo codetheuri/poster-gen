@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/codetheuri/todolist/internal/app/auth/models"
-	"github.com/codetheuri/todolist/pkg/logger"
+	"github.com/codetheuri/poster-gen/internal/app/auth/models"
+	"github.com/codetheuri/poster-gen/pkg/logger"
 	"gorm.io/gorm"
 )
 
@@ -48,5 +48,5 @@ func (r *revokedTokenRepository) IsTokenRevoked(ctx context.Context, jti string)
 
 func (r *revokedTokenRepository) DeleteExpiredRevokedTokens(ctx context.Context, currentTime time.Time) error {
 	r.log.Info("Deleting expired revoked tokens up to", "current_time", currentTime)
-	return  r.db.WithContext(ctx).Unscoped().Where("expires_at <= ?", currentTime).Delete(&models.RevokedToken{}).Error
+	return r.db.WithContext(ctx).Unscoped().Where("expires_at <= ?", currentTime).Delete(&models.RevokedToken{}).Error
 }

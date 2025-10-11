@@ -8,18 +8,18 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/codetheuri/todolist/internal/app/auth/handlers/dto"
-	"github.com/codetheuri/todolist/internal/app/auth/services"
-	tokenPkg "github.com/codetheuri/todolist/pkg/auth/token"
-	appErrors "github.com/codetheuri/todolist/pkg/errors"
-	"github.com/codetheuri/todolist/pkg/logger"
-	"github.com/codetheuri/todolist/pkg/pagination"
-	"github.com/codetheuri/todolist/pkg/web"
+	"github.com/codetheuri/poster-gen/internal/app/auth/handlers/dto"
+	"github.com/codetheuri/poster-gen/internal/app/auth/services"
+	tokenPkg "github.com/codetheuri/poster-gen/pkg/auth/token"
+	appErrors "github.com/codetheuri/poster-gen/pkg/errors"
+	"github.com/codetheuri/poster-gen/pkg/logger"
+	"github.com/codetheuri/poster-gen/pkg/pagination"
+	"github.com/codetheuri/poster-gen/pkg/web"
 	"github.com/go-chi/chi"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/codetheuri/todolist/pkg/validators"
-	//"github.com/codetheuri/todolist/internal/app/modules/auth/models"
+	"github.com/codetheuri/poster-gen/pkg/validators"
+	//"github.com/codetheuri/poster-gen/internal/app/modules/auth/models"
 	"math"
 )
 

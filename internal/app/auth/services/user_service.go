@@ -3,11 +3,11 @@ package services
 import (
 	"errors"
 
-	"github.com/codetheuri/todolist/internal/app/auth/models"
-	"github.com/codetheuri/todolist/internal/app/auth/repositories"
-	appErrors "github.com/codetheuri/todolist/pkg/errors"
-	"github.com/codetheuri/todolist/pkg/logger"
-	"github.com/codetheuri/todolist/pkg/validators"
+	"github.com/codetheuri/poster-gen/internal/app/auth/models"
+	"github.com/codetheuri/poster-gen/internal/app/auth/repositories"
+	appErrors "github.com/codetheuri/poster-gen/pkg/errors"
+	"github.com/codetheuri/poster-gen/pkg/logger"
+	"github.com/codetheuri/poster-gen/pkg/validators"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/context"
 	"gorm.io/gorm"

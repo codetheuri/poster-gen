@@ -9,14 +9,13 @@ import (
 	"text/template"
 )
 
-
 type ModuleData struct {
-	ModuleName string
+	ModuleName            string
 	CapitalizedModuleName string
-	ProjectRoot string
+	ProjectRoot           string
 }
 
-const projectGoModulePath = "github.com/codetheuri/todolist"
+const projectGoModulePath = "github.com/codetheuri/poster-gen"
 
 const moduleGoTemplate = `package {{.ModuleName}}
 
@@ -165,7 +164,8 @@ func New{{.CapitalizedModuleName}}Repository(db *gorm.DB, log logger.Logger) {{.
 // }
 
 `
-func main(){
+
+func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: go run ./cmd/genmodule <module_name> ")
 		os.Exit(1)
@@ -184,9 +184,9 @@ func main(){
 	}
 
 	moduleData := ModuleData{
-		ModuleName: moduleName,
+		ModuleName:            moduleName,
 		CapitalizedModuleName: capitalizedModuleName,
-		ProjectRoot: projectGoModulePath,
+		ProjectRoot:           projectGoModulePath,
 	}
 	basePath := filepath.Join("internal", "app", "modules", moduleName)
 
@@ -197,7 +197,7 @@ func main(){
 		response, _ := reader.ReadString('\n')
 		response = strings.ToLower(strings.TrimSpace(response))
 
-		if response != "y"{
+		if response != "y" {
 			fmt.Println("Operation cancelled")
 			os.Exit(0)
 		}
@@ -209,20 +209,20 @@ func main(){
 		filepath.Join(basePath, "handlers"),
 		filepath.Join(basePath, "services"),
 		filepath.Join(basePath, "repositories"),
-		filepath.Join(basePath, "models"), 
+		filepath.Join(basePath, "models"),
 	}
 
-	for _, dir := range dirs{
-		if err := os.MkdirAll(dir, 0755); err !=nil{
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0755); err != nil {
 			fmt.Printf("Error creating directory %s: %v\n", dir, err)
 			os.Exit(1)
 		}
 	}
 	filesToGenerate := []struct {
-		path string
+		path     string
 		template string
 	}{
-	
+
 		{filepath.Join(basePath, "module.go"), moduleGoTemplate},
 		{filepath.Join(basePath, "handlers", "handler.go"), handlersGoTemplate},
 		{filepath.Join(basePath, "services", "service.go"), servicesGoTemplate},
@@ -251,9 +251,8 @@ func main(){
 
 	fmt.Printf("\nModule '%s' generated successfully. Remember to:\n", moduleName)
 	fmt.Println("- Add it to 'internal/bootstrap/app.go' in the appModules slice.")
-	fmt.Printf("- **Crucially, create your model file(s) in 'internal/app/modules/%s/models/'.**\n",  moduleName)
+	fmt.Printf("- **Crucially, create your model file(s) in 'internal/app/modules/%s/models/'.**\n", moduleName)
 	fmt.Println("- Adjust generated boilerplate code (e.g., imports, methods, model usage).")
 	fmt.Println("- Run 'go mod tidy' after adding to app.go.")
 
 }
-

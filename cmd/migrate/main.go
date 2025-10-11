@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codetheuri/todolist/config"
-	"github.com/codetheuri/todolist/database/migrations"
-	"github.com/codetheuri/todolist/database/seeders"
+	"github.com/codetheuri/poster-gen/config"
+	"github.com/codetheuri/poster-gen/database/migrations"
+	"github.com/codetheuri/poster-gen/database/seeders"
 	"gorm.io/gorm"
 )
 
@@ -310,11 +310,11 @@ func runSeeders(db *gorm.DB, seederName string) {
 		log.Println("No database seeders registered.")
 		return
 	}
-    
+
 	sort.Slice(seeders.RegisteredSeeders, func(i, j int) bool {
 		return seeders.RegisteredSeeders[i].Name() < seeders.RegisteredSeeders[j].Name()
 	})
-   
+
 	for _, s := range seeders.RegisteredSeeders {
 		if seederName != "" && s.Name() != seederName {
 			log.Printf("Skipping seeder: %s (not '%s')\n", s.Name(), seederName)
@@ -326,7 +326,7 @@ func runSeeders(db *gorm.DB, seederName string) {
 		}
 		log.Printf("Seeder %s completed.", s.Name())
 	}
-    if seederName != "" {
+	if seederName != "" {
 		found := false
 		for _, s := range seeders.RegisteredSeeders {
 			if s.Name() == seederName {
@@ -335,7 +335,7 @@ func runSeeders(db *gorm.DB, seederName string) {
 			}
 		}
 		if !found {
-		log.Fatalf("Error: seeder '%s' not found ", seederName)
+			log.Fatalf("Error: seeder '%s' not found ", seederName)
 		}
 	}
 }

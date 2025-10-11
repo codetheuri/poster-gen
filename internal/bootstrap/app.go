@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/codetheuri/todolist/config"
-	modules "github.com/codetheuri/todolist/internal/app"
+	"github.com/codetheuri/poster-gen/config"
+	modules "github.com/codetheuri/poster-gen/internal/app"
 
-	todoModule "github.com/codetheuri/todolist/internal/app/todo"
-	authModule  "github.com/codetheuri/todolist/internal/app/auth"
-	router "github.com/codetheuri/todolist/internal/app/routers"
-	"github.com/codetheuri/todolist/internal/platform/database"
-	"github.com/codetheuri/todolist/pkg/logger"
-	"github.com/codetheuri/todolist/pkg/middleware"
-	"github.com/codetheuri/todolist/pkg/validators"
-	// "github.com/codetheuri/todolist/pkg/validators"
+	authModule "github.com/codetheuri/poster-gen/internal/app/auth"
+	postersModule "github.com/codetheuri/poster-gen/internal/app/modules/posters"
+	router "github.com/codetheuri/poster-gen/internal/app/routers"
+
+	"github.com/codetheuri/poster-gen/internal/platform/database"
+	"github.com/codetheuri/poster-gen/pkg/logger"
+	"github.com/codetheuri/poster-gen/pkg/middleware"
+	"github.com/codetheuri/poster-gen/pkg/validators"
+	// "github.com/codetheuri/poster-gen/pkg/validators"
 )
 
 // initiliazes and start the application
@@ -32,10 +33,11 @@ func Run(cfg *config.Config, log logger.Logger) error {
 
 	//application modules
 	var appModules []modules.Module
-    authMod := authModule.NewModule(db, log, appValidator, cfg)
-	 // Example of adding a new module))
-	appModules = append(appModules, authModule.NewModule( db, log, appValidator,cfg)) // Example of adding a new module
-     appModules = append(appModules, todoModule.NewModule(db, log, appValidator,authMod.TokenService))
+	// authMod := authModule.NewModule(db, log, appValidator, cfg)
+	// Example of adding a new module))
+	appModules = append(appModules, authModule.NewModule(db, log, appValidator, cfg)) // Example of adding a new module
+	appModules = append(appModules, postersModule.NewModule(db, log, appValidator))    // Example of adding a new module
+
 	//register routes from all modules
 	mainRouter := router.NewRouter(log)
 	for _, module := range appModules {

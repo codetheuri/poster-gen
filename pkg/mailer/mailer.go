@@ -5,9 +5,9 @@ import (
 	"net/smtp"
 	"strings"
 
-	"github.com/codetheuri/todolist/config"
-	appErrors "github.com/codetheuri/todolist/pkg/errors"
-	"github.com/codetheuri/todolist/pkg/logger"
+	"github.com/codetheuri/poster-gen/config"
+	appErrors "github.com/codetheuri/poster-gen/pkg/errors"
+	"github.com/codetheuri/poster-gen/pkg/logger"
 )
 
 type MailerService interface {

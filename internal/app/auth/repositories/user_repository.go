@@ -3,8 +3,8 @@ package repositories
 import (
 	"context"
 
-	"github.com/codetheuri/todolist/internal/app/auth/models"
-	"github.com/codetheuri/todolist/pkg/logger"
+	"github.com/codetheuri/poster-gen/internal/app/auth/models"
+	"github.com/codetheuri/poster-gen/pkg/logger"
 	"gorm.io/gorm"
 )
 
@@ -79,4 +79,3 @@ func (r *userRepository) GetUsers(ctx context.Context, offset, limit int) ([]*mo
 	}
 	return users, total, nil
 }
-

@@ -3,7 +3,7 @@ package router
 import (
 	"net/http"
 
-	"github.com/codetheuri/todolist/pkg/logger"
+	"github.com/codetheuri/poster-gen/pkg/logger"
 	"github.com/go-chi/chi"
 )
 

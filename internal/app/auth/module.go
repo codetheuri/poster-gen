@@ -1,14 +1,14 @@
 package auth
 
 import (
-	"github.com/codetheuri/todolist/config"
-	authHandlers "github.com/codetheuri/todolist/internal/app/auth/handlers"
-	authRepositories "github.com/codetheuri/todolist/internal/app/auth/repositories"
-	authServices "github.com/codetheuri/todolist/internal/app/auth/services"
-	tokenPkg "github.com/codetheuri/todolist/pkg/auth/token"
-	"github.com/codetheuri/todolist/pkg/logger"
-	"github.com/codetheuri/todolist/pkg/middleware"
-	"github.com/codetheuri/todolist/pkg/validators"
+	"github.com/codetheuri/poster-gen/config"
+	authHandlers "github.com/codetheuri/poster-gen/internal/app/auth/handlers"
+	authRepositories "github.com/codetheuri/poster-gen/internal/app/auth/repositories"
+	authServices "github.com/codetheuri/poster-gen/internal/app/auth/services"
+	tokenPkg "github.com/codetheuri/poster-gen/pkg/auth/token"
+	"github.com/codetheuri/poster-gen/pkg/logger"
+	"github.com/codetheuri/poster-gen/pkg/middleware"
+	"github.com/codetheuri/poster-gen/pkg/validators"
 	"github.com/go-chi/chi"
 	"gorm.io/gorm"
 )
@@ -23,7 +23,7 @@ type Module struct {
 // NewModule initializes  Auth module.
 func NewModule(db *gorm.DB, log logger.Logger, validator *validators.Validator, cfg *config.Config) *Module {
 	repos := authRepositories.NewAuthRepository(db, log)
-	
+
 	jwtSecret := cfg.JWTSecret
 	tokenTTL := cfg.AccessTokenTTL
 
@@ -50,7 +50,7 @@ func (m *Module) RegisterRoutes(r chi.Router) {
 	// Authenticated routes (will need middleware later)
 
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.Authenticator(m.TokenService,m.log))
+		r.Use(middleware.Authenticator(m.TokenService, m.log))
 		r.Get("/auth/profile/{id}", m.Handler.GetUserProfile)
 		r.Put("/auth/users/{id}/change-password", m.Handler.ChangePassword)
 		r.Delete("/auth/users/{id}", m.Handler.DeleteUser)

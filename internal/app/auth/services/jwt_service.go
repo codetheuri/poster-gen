@@ -1,31 +1,26 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
-	"context"
 
-	"github.com/codetheuri/todolist/internal/app/auth/models"
-	"github.com/codetheuri/todolist/internal/app/auth/repositories"
-	appErrors "github.com/codetheuri/todolist/pkg/errors"
-	"github.com/codetheuri/todolist/pkg/logger"
-	   tokenPkg "github.com/codetheuri/todolist/pkg/auth/token"
+	"github.com/codetheuri/poster-gen/internal/app/auth/models"
+	"github.com/codetheuri/poster-gen/internal/app/auth/repositories"
+	tokenPkg "github.com/codetheuri/poster-gen/pkg/auth/token"
+	appErrors "github.com/codetheuri/poster-gen/pkg/errors"
+	"github.com/codetheuri/poster-gen/pkg/logger"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-
-
 )
 
 type jwtService struct {
-    revokedTokenRepo repositories.RevokedTokenRepository
-	log   		logger.Logger
-	jwtSecret []byte
-	tokenTTL  time.Duration
+	revokedTokenRepo repositories.RevokedTokenRepository
+	log              logger.Logger
+	jwtSecret        []byte
+	tokenTTL         time.Duration
 }
-
-
-
 
 // constructor for the TokenService.
 func NewJWTService(revokedTokenRepo repositories.RevokedTokenRepository, jwtSecret string, tokenTTL time.Duration, log logger.Logger) tokenPkg.TokenService {

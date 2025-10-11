@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	tokenPkg "github.com/codetheuri/todolist/pkg/auth/token"
-	appErrors "github.com/codetheuri/todolist/pkg/errors"
-	"github.com/codetheuri/todolist/pkg/logger"
-	"github.com/codetheuri/todolist/pkg/web"
+	tokenPkg "github.com/codetheuri/poster-gen/pkg/auth/token"
+	appErrors "github.com/codetheuri/poster-gen/pkg/errors"
+	"github.com/codetheuri/poster-gen/pkg/logger"
+	"github.com/codetheuri/poster-gen/pkg/web"
 )
 
 // --- authenticator middleware to validate jwt tokens
@@ -59,8 +59,6 @@ func Authenticator(tokenService tokenPkg.TokenService, log logger.Logger) func(n
 	}
 
 }
-
-
 
 //retrieve role from urequest context
 

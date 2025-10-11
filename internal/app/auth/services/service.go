@@ -2,16 +2,20 @@ package services
 
 import (
 	"time"
-	authRepositories "github.com/codetheuri/todolist/internal/app/auth/repositories"
-	//"github.com/codetheuri/todolist/internal/app/modules/auth/models"
-	"github.com/codetheuri/todolist/pkg/logger"
-	"github.com/codetheuri/todolist/pkg/validators"
-	tokenPkg "github.com/codetheuri/todolist/pkg/auth/token"
+
+	authRepositories "github.com/codetheuri/poster-gen/internal/app/auth/repositories"
+
+	//"github.com/codetheuri/poster-gen/internal/app/modules/auth/models"
+	tokenPkg "github.com/codetheuri/poster-gen/pkg/auth/token"
+	"github.com/codetheuri/poster-gen/pkg/logger"
+	"github.com/codetheuri/poster-gen/pkg/validators"
 )
+
 type AuthService struct {
 	UserService  UserService
 	TokenService tokenPkg.TokenService
 }
+
 // service constructor for all services
 func NewAuthService(
 	repos *authRepositories.AuthRepository,
@@ -20,9 +24,7 @@ func NewAuthService(
 	tokenTTL time.Duration,
 	log logger.Logger) *AuthService {
 	return &AuthService{
-	   UserService: NewUserService(repos.UserRepo, validator, log),
-	   TokenService: NewJWTService(repos.RevokedTokenRepo, jwtSecret, tokenTTL, log),
+		UserService:  NewUserService(repos.UserRepo, validator, log),
+		TokenService: NewJWTService(repos.RevokedTokenRepo, jwtSecret, tokenTTL, log),
 	}
 }
-
-

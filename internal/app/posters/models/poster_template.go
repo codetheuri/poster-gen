@@ -10,4 +10,6 @@ type PosterTemplate struct {
     Price     int    `json:"price" gorm:"not null;default:50"`      // In KSH
     Thumbnail string `json:"thumbnail" gorm:"type:varchar(255)"`
     IsActive  bool   `json:"is_active" gorm:"default:true"`
+    Layout    string `json:"layout"`
+
 }

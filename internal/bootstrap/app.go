@@ -33,10 +33,10 @@ func Run(cfg *config.Config, log logger.Logger) error {
 
 	//application modules
 	var appModules []modules.Module
-	// authMod := authModule.NewModule(db, log, appValidator, cfg)
+	authMod := authModule.NewModule(db, log, appValidator, cfg)
 	// Example of adding a new module))
 	appModules = append(appModules, authModule.NewModule(db, log, appValidator, cfg)) // Example of adding a new module
-	appModules = append(appModules, postersModule.NewModule(db, log, appValidator))    // Example of adding a new module
+	appModules = append(appModules, postersModule.NewModule(db, log, appValidator,authMod.TokenService))    // Example of adding a new module
 
 	//register routes from all modules
 	mainRouter := router.NewRouter(log)

@@ -7,31 +7,34 @@ import (
 	"net/http"
 	"strconv"
 
-	postersDTO "github.com/codetheuri/poster-gen/internal/app/posters/handlers/dto"
-	postersServices "github.com/codetheuri/poster-gen/internal/app/posters/services"
-	appErrors "github.com/codetheuri/poster-gen/pkg/errors"
-	"github.com/codetheuri/poster-gen/pkg/logger"
-
-	// "github.com/codetheuri/poster-gen/pkg/pagination"
 	"errors"
 	"math"
 
+	postersDTO "github.com/codetheuri/poster-gen/internal/app/posters/handlers/dto"
+	postersServices "github.com/codetheuri/poster-gen/internal/app/posters/services"
+	appErrors "github.com/codetheuri/poster-gen/pkg/errors"
+	tokenPkg "github.com/codetheuri/poster-gen/pkg/auth/token"
+	"github.com/codetheuri/poster-gen/pkg/logger"
 	"github.com/codetheuri/poster-gen/pkg/validators"
 	"github.com/codetheuri/poster-gen/pkg/web"
 	"github.com/go-chi/chi"
 )
 
 type PostersHandler interface {
-	// GeneratePoster(w http.ResponseWriter, r *http.Request)
+	GeneratePoster(w http.ResponseWriter, r *http.Request)
 	GetPosterByID(w http.ResponseWriter, r *http.Request)
-	// UpdatePoster(w http.ResponseWriter, r *http.Request)
+	UpdatePoster(w http.ResponseWriter, r *http.Request)
 	DeletePoster(w http.ResponseWriter, r *http.Request)
 	GetActiveTemplates(w http.ResponseWriter, r *http.Request)
 	CreateOrder(w http.ResponseWriter, r *http.Request)
 	ProcessPayment(w http.ResponseWriter, r *http.Request)
 	GetOrderByID(w http.ResponseWriter, r *http.Request)
-	// UpdateOrder(w http.ResponseWriter, r *http.Request)
+	UpdateOrder(w http.ResponseWriter, r *http.Request)
 	DeleteOrder(w http.ResponseWriter, r *http.Request)
+	CreateTemplate(w http.ResponseWriter, r *http.Request)  // New
+	GetTemplateByID(w http.ResponseWriter, r *http.Request) // New
+	UpdateTemplate(w http.ResponseWriter, r *http.Request)  // New
+	DeleteTemplate(w http.ResponseWriter, r *http.Request)  // New
 }
 
 type postersHandler struct {
@@ -49,66 +52,56 @@ func NewPostersHandler(service *postersServices.PosterService, log logger.Logger
 	}
 }
 
-// func (h *postersHandler) GeneratePoster(w http.ResponseWriter, r *http.Request) {
-// 	h.log.Info("Handler: Received GeneratePoster request")
+func (h *postersHandler) GeneratePoster(w http.ResponseWriter, r *http.Request) {
+	h.log.Info("Handler: Received GeneratePoster request")
 
-// 	var input postersDTO.PosterInput
-// 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-// 		h.log.Warn("Handler: Failed to decode GeneratePoster request", err)
-// 		web.RespondError(w, appErrors.ValidationError("invalid request payload", err, nil), http.StatusBadRequest)
-// 		return
-// 	}
+	var input postersDTO.PosterInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.log.Warn("Handler: Failed to decode GeneratePoster request", err)
+		web.RespondError(w, appErrors.ValidationError("invalid request payload", err, nil), http.StatusBadRequest)
+		return
+	}
 
-// 	validationErrors := h.validator.Struct(input)
-// 	if validationErrors != nil {
-// 		h.log.Warn("Handler: Validation failed for GeneratePoster request", validationErrors)
-// 		web.RespondError(w, appErrors.ValidationError("validation failed", nil, validationErrors), http.StatusBadRequest)
-// 		return
-// 	}
+	validationErrors := h.validator.Struct(input)
+	if validationErrors != nil {
+		h.log.Warn("Handler: Validation failed for GeneratePoster request", validationErrors)
+		web.RespondError(w, appErrors.ValidationError("validation failed", nil, validationErrors), http.StatusBadRequest)
+		return
+	}
 
-// 	userID, ok := getUserIDFromContext(r.Context())
-// 	if !ok {
-// 		h.log.Warn("Handler: UserID not found in context for GeneratePoster")
-// 		web.RespondError(w, appErrors.AuthError("authentication context missing", nil), http.StatusUnauthorized)
-// 		return
-// 	}
+	userID, ok := getUserIDFromContext(r.Context())
+	if !ok {
+		h.log.Warn("Handler: UserID not found in context for GeneratePoster")
+		web.RespondError(w, appErrors.AuthError("authentication context missing", nil), http.StatusUnauthorized)
+		return
+	}
 
-// 	// Extract orderID and templateID from query params or path if needed
-// 	orderIDStr := r.URL.Query().Get("order_id")
-// 	templateIDStr := r.URL.Query().Get("template_id")
-// 	orderID, err := strconv.ParseUint(orderIDStr, 10, 64)
-// 	if err != nil || orderID > math.MaxUint {
-// 		h.log.Warn("Handler: Invalid or missing order_id", err, "order_id", orderIDStr)
-// 		web.RespondError(w, appErrors.ValidationError("invalid order_id", nil, nil), http.StatusBadRequest)
-// 		return
-// 	}
-// 	templateID, err := strconv.ParseUint(templateIDStr, 10, 64)
-// 	if err != nil || templateID > math.MaxUint {
-// 		h.log.Warn("Handler: Invalid or missing template_id", err, "template_id", templateIDStr)
-// 		web.RespondError(w, appErrors.ValidationError("invalid template_id", nil, nil), http.StatusBadRequest)
-// 		return
-// 	}
+	orderIDStr := r.URL.Query().Get("order_id")
+	templateIDStr := r.URL.Query().Get("template_id")
+	orderID, err := strconv.ParseUint(orderIDStr, 10, 64)
+	if err != nil || orderID > math.MaxUint {
+		h.log.Warn("Handler: Invalid or missing order_id", err, "order_id", orderIDStr)
+		web.RespondError(w, appErrors.ValidationError("invalid order_id", nil, nil), http.StatusBadRequest)
+		return
+	}
+	templateID, err := strconv.ParseUint(templateIDStr, 10, 64)
+	if err != nil || templateID > math.MaxUint {
+		h.log.Warn("Handler: Invalid or missing template_id", err, "template_id", templateIDStr)
+		web.RespondError(w, appErrors.ValidationError("invalid template_id", nil, nil), http.StatusBadRequest)
+		return
+	}
 
-// 	ctx := r.Context()
-// 	poster, err := h.service.PosterService.GeneratePoster(ctx, uint(userID), uint(orderID), uint(templateID), &input)
-// 	if err != nil {
-// 		h.log.Error("Handler: Failed to generate poster through service", err)
-// 		h.handleAppError(w, err, "generate poster")
-// 		return
-// 	}
+	ctx := r.Context()
+	poster, err := h.service.PosterService.GeneratePoster(ctx, uint(userID), uint(orderID), uint(templateID), &input)
+	if err != nil {
+		h.log.Error("Handler: Failed to generate poster through service", err)
+		h.handleAppError(w, err, "generate poster")
+		return
+	}
 
-// 	resp := postersDTO.PosterResponse{
-// 		ID:           poster.ID,
-// 		UserID:       poster.UserID,
-// 		OrderID:      poster.OrderID,
-// 		TemplateID:   poster.TemplateID,
-// 		BusinessName: poster.BusinessName,
-// 		PDFURL:       poster.PDFURL,
-// 		Status:       poster.Status,
-// 	}
-// 	h.log.Info("Handler: Poster generated successfully", "poster_id", poster.ID)
-// 	web.RespondData(w, http.StatusCreated, resp, "Poster generated successfully", web.WithSuccessType("toast"))
-// }
+	h.log.Info("Handler: Poster generated successfully", "poster_id", poster.ID)
+	web.RespondData(w, http.StatusCreated, poster, "Poster generated successfully", web.WithSuccessType("toast"))
+}
 
 func (h *postersHandler) GetPosterByID(w http.ResponseWriter, r *http.Request) {
 	h.log.Info("Handler: Received GetPosterByID request")
@@ -129,56 +122,45 @@ func (h *postersHandler) GetPosterByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := postersDTO.PosterResponse{
-		ID:           poster.ID,
-		UserID:       poster.UserID,
-		OrderID:      poster.OrderID,
-		TemplateID:   poster.TemplateID,
-		BusinessName: poster.BusinessName,
-		PDFURL:       poster.PDFURL,
-		Status:       poster.Status,
-	}
 	h.log.Info("Handler: Poster retrieved successfully", "poster_id", poster.ID)
-	web.RespondData(w, http.StatusOK, resp, "Poster retrieved successfully", web.WithoutSuccess())
+	web.RespondData(w, http.StatusOK, poster, "Poster retrieved successfully", web.WithoutSuccess())
 }
 
-// func (h *postersHandler) UpdatePoster(w http.ResponseWriter, r *http.Request) {
-// 	h.log.Info("Handler: Received UpdatePoster request")
+func (h *postersHandler) UpdatePoster(w http.ResponseWriter, r *http.Request) {
+	h.log.Info("Handler: Received UpdatePoster request")
 
-// 	idStr := chi.URLParam(r, "id")
-// 	id, err := strconv.ParseUint(idStr, 10, 64)
-// 	if err != nil || id > math.MaxUint {
-// 		h.log.Warn("Handler: Invalid poster ID format", err, "id", idStr)
-// 		web.RespondError(w, appErrors.ValidationError("invalid poster ID format", nil, nil), http.StatusBadRequest)
-// 		return
-// 	}
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil || id > math.MaxUint {
+		h.log.Warn("Handler: Invalid poster ID format", err, "id", idStr)
+		web.RespondError(w, appErrors.ValidationError("invalid poster ID format", nil, nil), http.StatusBadRequest)
+		return
+	}
 
-// 	var input postersDTO.PosterInput
-// 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-// 		h.log.Warn("Handler: Failed to decode UpdatePoster request", err)
-// 		web.RespondError(w, appErrors.ValidationError("invalid request payload", err, nil), http.StatusBadRequest)
-// 		return
-// 	}
+	var input postersDTO.PosterInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.log.Warn("Handler: Failed to decode UpdatePoster request", err)
+		web.RespondError(w, appErrors.ValidationError("invalid request payload", err, nil), http.StatusBadRequest)
+		return
+	}
 
-// 	validationErrors := h.validator.Struct(input)
-// 	if validationErrors != nil {
-// 		h.log.Warn("Handler: Validation failed for UpdatePoster request", validationErrors)
-// 		web.RespondError(w, appErrors.ValidationError("validation failed", nil, validationErrors), http.StatusBadRequest)
-// 		return
-// 	}
+	validationErrors := h.validator.Struct(input)
+	if validationErrors != nil {
+		h.log.Warn("Handler: Validation failed for UpdatePoster request", validationErrors)
+		web.RespondError(w, appErrors.ValidationError("validation failed", nil, validationErrors), http.StatusBadRequest)
+		return
+	}
 
-// 	ctx := r.Context()
-// 	poster := &models.Poster{ID: uint(id)}   // Partial update; adjust fields as needed
-// 	poster.BusinessName = input.BusinessName // Example; extend with other fields
-// 	if err := h.service.PosterService.UpdatePoster(ctx, poster); err != nil {
-// 		h.log.Error("Handler: Failed to update poster", err, "id", id)
-// 		h.handleAppError(w, err, "update poster")
-// 		return
-// 	}
+	ctx := r.Context()
+	if err := h.service.PosterService.UpdatePoster(ctx, uint(id), &input); err != nil {
+		h.log.Error("Handler: Failed to update poster", err, "id", id)
+		h.handleAppError(w, err, "update poster")
+		return
+	}
 
-// 	h.log.Info("Handler: Poster updated successfully", "poster_id", id)
-// 	web.RespondMessage(w, http.StatusOK, "Poster updated successfully", "success", "toast")
-// }
+	h.log.Info("Handler: Poster updated successfully", "poster_id", id)
+	web.RespondMessage(w, http.StatusOK, "Poster updated successfully", "success", "toast")
+}
 
 func (h *postersHandler) DeletePoster(w http.ResponseWriter, r *http.Request) {
 	h.log.Info("Handler: Received DeletePoster request")
@@ -213,19 +195,8 @@ func (h *postersHandler) GetActiveTemplates(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	resp := make([]postersDTO.TemplateResponse, len(templates))
-	for i, t := range templates {
-		resp[i] = postersDTO.TemplateResponse{
-			ID:        t.ID,
-			Name:      t.Name,
-			Type:      t.Type,
-			Price:     t.Price,
-			Thumbnail: t.Thumbnail,
-			IsActive:  t.IsActive,
-		}
-	}
 	h.log.Info("Handler: Active templates retrieved successfully", "count", len(templates))
-	web.RespondListData(w, http.StatusOK, resp, nil)
+	web.RespondListData(w, http.StatusOK, templates, nil)
 }
 
 func (h *postersHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
@@ -253,22 +224,15 @@ func (h *postersHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	order, err := h.service.OrderService.CreateOrder(ctx, uint(userID), input.TotalAmount)
+	order, err := h.service.OrderService.CreateOrder(ctx, uint(userID), &input)
 	if err != nil {
 		h.log.Error("Handler: Failed to create order", err)
 		h.handleAppError(w, err, "create order")
 		return
 	}
 
-	resp := postersDTO.OrderResponse{
-		ID:          order.ID,
-		UserID:      order.UserID,
-		OrderNumber: order.OrderNumber,
-		TotalAmount: order.TotalAmount,
-		Status:      order.Status,
-	}
 	h.log.Info("Handler: Order created successfully", "order_id", order.ID)
-	web.RespondData(w, http.StatusCreated, resp, "Order created successfully", web.WithSuccessType("toast"))
+	web.RespondData(w, http.StatusCreated, order, "Order created successfully", web.WithSuccessType("toast"))
 }
 
 func (h *postersHandler) ProcessPayment(w http.ResponseWriter, r *http.Request) {
@@ -328,54 +292,45 @@ func (h *postersHandler) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := postersDTO.OrderResponse{
-		ID:           order.ID,
-		UserID:       order.UserID,
-		OrderNumber:  order.OrderNumber,
-		TotalAmount:  order.TotalAmount,
-		Status:       order.Status,
-		MpesaReceipt: &order.MpesaReceipt,
-	}
 	h.log.Info("Handler: Order retrieved successfully", "order_id", order.ID)
-	web.RespondData(w, http.StatusOK, resp, "Order retrieved successfully", web.WithoutSuccess())
+	web.RespondData(w, http.StatusOK, order, "Order retrieved successfully", web.WithoutSuccess())
 }
 
-// func (h *postersHandler) UpdateOrder(w http.ResponseWriter, r *http.Request) {
-// 	h.log.Info("Handler: Received UpdateOrder request")
+func (h *postersHandler) UpdateOrder(w http.ResponseWriter, r *http.Request) {
+	h.log.Info("Handler: Received UpdateOrder request")
 
-// 	idStr := chi.URLParam(r, "id")
-// 	id, err := strconv.ParseUint(idStr, 10, 64)
-// 	if err != nil || id > math.MaxUint {
-// 		h.log.Warn("Handler: Invalid order ID format", err, "id", idStr)
-// 		web.RespondError(w, appErrors.ValidationError("invalid order ID format", nil, nil), http.StatusBadRequest)
-// 		return
-// 	}
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil || id > math.MaxUint {
+		h.log.Warn("Handler: Invalid order ID format", err, "id", idStr)
+		web.RespondError(w, appErrors.ValidationError("invalid order ID format", nil, nil), http.StatusBadRequest)
+		return
+	}
 
-// 	var input postersDTO.OrderInput
-// 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-// 		h.log.Warn("Handler: Failed to decode UpdateOrder request", err)
-// 		web.RespondError(w, appErrors.ValidationError("invalid request payload", err, nil), http.StatusBadRequest)
-// 		return
-// 	}
+	var input postersDTO.OrderInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.log.Warn("Handler: Failed to decode UpdateOrder request", err)
+		web.RespondError(w, appErrors.ValidationError("invalid request payload", err, nil), http.StatusBadRequest)
+		return
+	}
 
-// 	validationErrors := h.validator.Struct(input)
-// 	if validationErrors != nil {
-// 		h.log.Warn("Handler: Validation failed for UpdateOrder request", validationErrors)
-// 		web.RespondError(w, appErrors.ValidationError("validation failed", nil, validationErrors), http.StatusBadRequest)
-// 		return
-// 	}
+	validationErrors := h.validator.Struct(input)
+	if validationErrors != nil {
+		h.log.Warn("Handler: Validation failed for UpdateOrder request", validationErrors)
+		web.RespondError(w, appErrors.ValidationError("validation failed", nil, validationErrors), http.StatusBadRequest)
+		return
+	}
 
-// 	ctx := r.Context()
-// 	order := &models.Order{ID: uint(id), TotalAmount: input.TotalAmount} // Partial update
-// 	if err := h.service.OrderService.UpdateOrder(ctx, order); err != nil {
-// 		h.log.Error("Handler: Failed to update order", err, "id", id)
-// 		h.handleAppError(w, err, "update order")
-// 		return
-// 	}
+	ctx := r.Context()
+	if err := h.service.OrderService.UpdateOrder(ctx, uint(id), &input); err != nil {
+		h.log.Error("Handler: Failed to update order", err, "id", id)
+		h.handleAppError(w, err, "update order")
+		return
+	}
 
-// 	h.log.Info("Handler: Order updated successfully", "order_id", id)
-// 	web.RespondMessage(w, http.StatusOK, "Order updated successfully", "success", "toast")
-// }
+	h.log.Info("Handler: Order updated successfully", "order_id", id)
+	web.RespondMessage(w, http.StatusOK, "Order updated successfully", "success", "toast")
+}
 
 func (h *postersHandler) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	h.log.Info("Handler: Received DeleteOrder request")
@@ -398,7 +353,115 @@ func (h *postersHandler) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	h.log.Info("Handler: Order deleted successfully", "order_id", id)
 	web.RespondMessage(w, http.StatusNoContent, "Order deleted successfully", "success", "toast")
 }
+func (h *postersHandler) CreateTemplate(w http.ResponseWriter, r *http.Request) {
+	h.log.Info("Handler: Received CreateTemplate request")
 
+	var input postersDTO.TemplateInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.log.Warn("Handler: Failed to decode CreateTemplate request", err)
+		web.RespondError(w, appErrors.ValidationError("invalid request payload", err, nil), http.StatusBadRequest)
+		return
+	}
+
+	validationErrors := h.validator.Struct(input)
+	if validationErrors != nil {
+		h.log.Warn("Handler: Validation failed for CreateTemplate request", validationErrors)
+		web.RespondError(w, appErrors.ValidationError("validation failed", nil, validationErrors), http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	template, err := h.service.PosterTemplateService.CreateTemplate(ctx, &input)
+	if err != nil {
+		h.log.Error("Handler: Failed to create template through service", err)
+		h.handleAppError(w, err, "create template")
+		return
+	}
+
+	h.log.Info("Handler: Template created successfully", "template_id", template.ID)
+	web.RespondData(w, http.StatusCreated, template, "Template created successfully", web.WithSuccessType("toast"))
+}
+
+func (h *postersHandler) GetTemplateByID(w http.ResponseWriter, r *http.Request) {
+	h.log.Info("Handler: Received GetTemplateByID request")
+
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil || id > math.MaxUint {
+		h.log.Warn("Handler: Invalid template ID format", err, "id", idStr)
+		web.RespondError(w, appErrors.ValidationError("invalid template ID format", nil, nil), http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	template, err := h.service.PosterTemplateService.GetTemplateByID(ctx, uint(id))
+	if err != nil {
+		h.log.Error("Handler: Failed to get template by ID", err, "id", id)
+		h.handleAppError(w, err, "get template")
+		return
+	}
+
+	h.log.Info("Handler: Template retrieved successfully", "template_id", template.ID)
+	web.RespondData(w, http.StatusOK, template, "Template retrieved successfully", web.WithoutSuccess())
+}
+
+func (h *postersHandler) UpdateTemplate(w http.ResponseWriter, r *http.Request) {
+	h.log.Info("Handler: Received UpdateTemplate request")
+
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil || id > math.MaxUint {
+		h.log.Warn("Handler: Invalid template ID format", err, "id", idStr)
+		web.RespondError(w, appErrors.ValidationError("invalid template ID format", nil, nil), http.StatusBadRequest)
+		return
+	}
+
+	var input postersDTO.TemplateInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.log.Warn("Handler: Failed to decode UpdateTemplate request", err)
+		web.RespondError(w, appErrors.ValidationError("invalid request payload", err, nil), http.StatusBadRequest)
+		return
+	}
+
+	validationErrors := h.validator.Struct(input)
+	if validationErrors != nil {
+		h.log.Warn("Handler: Validation failed for UpdateTemplate request", validationErrors)
+		web.RespondError(w, appErrors.ValidationError("validation failed", nil, validationErrors), http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	if err := h.service.PosterTemplateService.UpdateTemplate(ctx, uint(id), &input); err != nil {
+		h.log.Error("Handler: Failed to update template", err, "id", id)
+		h.handleAppError(w, err, "update template")
+		return
+	}
+
+	h.log.Info("Handler: Template updated successfully", "template_id", id)
+	web.RespondMessage(w, http.StatusOK, "Template updated successfully", "success", "toast")
+}
+
+func (h *postersHandler) DeleteTemplate(w http.ResponseWriter, r *http.Request) {
+	h.log.Info("Handler: Received DeleteTemplate request")
+
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil || id > math.MaxUint {
+		h.log.Warn("Handler: Invalid template ID format", err, "id", idStr)
+		web.RespondError(w, appErrors.ValidationError("invalid template ID format", nil, nil), http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	if err := h.service.PosterTemplateService.DeleteTemplate(ctx, uint(id)); err != nil {
+		h.log.Error("Handler: Failed to delete template", err, "id", id)
+		h.handleAppError(w, err, "delete template")
+		return
+	}
+
+	h.log.Info("Handler: Template deleted successfully", "template_id", id)
+	web.RespondMessage(w, http.StatusNoContent, "Template deleted successfully", "success", "toast")
+}
 func (h *postersHandler) handleAppError(w http.ResponseWriter, err error, action string) {
 	var appErr appErrors.AppError
 	if errors.As(err, &appErr) {
@@ -417,7 +480,7 @@ func (h *postersHandler) handleAppError(w http.ResponseWriter, err error, action
 		case "CONFLICT_ERROR":
 			web.RespondError(w, appErr, http.StatusConflict)
 		case "PAYMENT_ERROR":
-			web.RespondError(w, appErr, http.StatusPaymentRequired) // 402, adjust if needed
+			web.RespondError(w, appErr, http.StatusPaymentRequired)
 		case "BAD_REQUEST":
 			web.RespondError(w, appErr, http.StatusBadRequest)
 		default:
@@ -430,8 +493,6 @@ func (h *postersHandler) handleAppError(w http.ResponseWriter, err error, action
 	}
 }
 
-// getUserIDFromContext extracts the user ID from the request context (set by middleware)
 func getUserIDFromContext(ctx context.Context) (uint, bool) {
-	userID, ok := ctx.Value("userID").(uint)
-	return userID, ok
+	return tokenPkg.GetUserIDFromContext(ctx)
 }

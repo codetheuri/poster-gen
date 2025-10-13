@@ -2,8 +2,9 @@ package services
 
 import (
 	"context"
-	stdErrors "errors" // Import standard errors package
+	stdErrors "errors"
 
+	dto "github.com/codetheuri/poster-gen/internal/app/posters/handlers/dto"
 	"github.com/codetheuri/poster-gen/internal/app/posters/models"
 	"github.com/codetheuri/poster-gen/internal/app/posters/repositories"
 	"github.com/codetheuri/poster-gen/pkg/errors"
@@ -12,22 +13,12 @@ import (
 	"gorm.io/gorm"
 )
 
-// PosterTemplateSubService interface for template operations
 type PosterTemplateSubService interface {
-	CreateTemplate(ctx context.Context, input *TemplateInput) (*models.PosterTemplate, error)
-	GetTemplateByID(ctx context.Context, id uint) (*models.PosterTemplate, error)
-	GetActiveTemplates(ctx context.Context) ([]*models.PosterTemplate, error)
-	UpdateTemplate(ctx context.Context, template *models.PosterTemplate) error
+	CreateTemplate(ctx context.Context, input *dto.TemplateInput) (*dto.TemplateResponse, error)
+	GetTemplateByID(ctx context.Context, id uint) (*dto.TemplateResponse, error)
+	GetActiveTemplates(ctx context.Context) ([]*dto.TemplateResponse, error)
+	UpdateTemplate(ctx context.Context, id uint, input *dto.TemplateInput) error
 	DeleteTemplate(ctx context.Context, id uint) error
-}
-
-// TemplateInput defines the input data for creating a template
-type TemplateInput struct {
-	Name      string `json:"name" validate:"required,max=50"`
-	Type      string `json:"type" validate:"required,max=20"`
-	Price     int    `json:"price" validate:"required,min=0"`
-	Thumbnail string `json:"thumbnail" validate:"omitempty,url,max=255"`
-	IsActive  bool   `json:"is_active" validate:"omitempty"`
 }
 
 type posterTemplateSubService struct {
@@ -36,7 +27,6 @@ type posterTemplateSubService struct {
 	log       logger.Logger
 }
 
-// NewPosterTemplateSubService constructor
 func NewPosterTemplateSubService(repo repositories.PosterTemplateSubRepository, validator *validators.Validator, log logger.Logger) PosterTemplateSubService {
 	return &posterTemplateSubService{
 		repo:      repo,
@@ -45,7 +35,7 @@ func NewPosterTemplateSubService(repo repositories.PosterTemplateSubRepository, 
 	}
 }
 
-func (s *posterTemplateSubService) CreateTemplate(ctx context.Context, input *TemplateInput) (*models.PosterTemplate, error) {
+func (s *posterTemplateSubService) CreateTemplate(ctx context.Context, input *dto.TemplateInput) (*dto.TemplateResponse, error) {
 	s.log.Info("Creating poster template", "name", input.Name)
 
 	validationErrors := s.validator.Struct(input)
@@ -67,11 +57,18 @@ func (s *posterTemplateSubService) CreateTemplate(ctx context.Context, input *Te
 		return nil, errors.DatabaseError("failed to save template", err)
 	}
 
-	s.log.Info("Template created successfully", "template_id", template.ID)
-	return template, nil
+	resp := &dto.TemplateResponse{
+		ID:        template.ID,
+		Name:      template.Name,
+		Type:      template.Type,
+		Price:     template.Price,
+		Thumbnail: template.Thumbnail,
+		IsActive:  template.IsActive,
+	}
+	return resp, nil
 }
 
-func (s *posterTemplateSubService) GetTemplateByID(ctx context.Context, id uint) (*models.PosterTemplate, error) {
+func (s *posterTemplateSubService) GetTemplateByID(ctx context.Context, id uint) (*dto.TemplateResponse, error) {
 	s.log.Info("Getting template by ID", "id", id)
 	template, err := s.repo.GetTemplateByID(ctx, id)
 	if err != nil {
@@ -82,23 +79,59 @@ func (s *posterTemplateSubService) GetTemplateByID(ctx context.Context, id uint)
 		s.log.Error("Failed to get template", err, "id", id)
 		return nil, errors.DatabaseError("failed to retrieve template", err)
 	}
-	return template, nil
+	resp := &dto.TemplateResponse{
+		ID:        template.ID,
+		Name:      template.Name,
+		Type:      template.Type,
+		Price:     template.Price,
+		Thumbnail: template.Thumbnail,
+		IsActive:  template.IsActive,
+	}
+	return resp, nil
 }
 
-func (s *posterTemplateSubService) GetActiveTemplates(ctx context.Context) ([]*models.PosterTemplate, error) {
+func (s *posterTemplateSubService) GetActiveTemplates(ctx context.Context) ([]*dto.TemplateResponse, error) {
 	s.log.Info("Getting active templates")
 	templates, err := s.repo.GetActiveTemplates(ctx)
 	if err != nil {
 		s.log.Error("Failed to get active templates", err)
 		return nil, errors.DatabaseError("failed to retrieve active templates", err)
 	}
-	return templates, nil
+	resp := make([]*dto.TemplateResponse, len(templates))
+	for i, t := range templates {
+		resp[i] = &dto.TemplateResponse{
+			ID:        t.ID,
+			Name:      t.Name,
+			Type:      t.Type,
+			Price:     t.Price,
+			Thumbnail: t.Thumbnail,
+			IsActive:  t.IsActive,
+		}
+	}
+	return resp, nil
 }
 
-func (s *posterTemplateSubService) UpdateTemplate(ctx context.Context, template *models.PosterTemplate) error {
-	s.log.Info("Updating template", "id", template.ID)
+func (s *posterTemplateSubService) UpdateTemplate(ctx context.Context, id uint, input *dto.TemplateInput) error {
+	s.log.Info("Updating template", "id", id)
+
+	template, err := s.repo.GetTemplateByID(ctx, id)
+	if err != nil {
+		if stdErrors.Is(err, gorm.ErrRecordNotFound) {
+			s.log.Warn("Template not found", "id", id)
+			return errors.NotFoundError("template not found", err)
+		}
+		s.log.Error("Failed to get template for update", err, "id", id)
+		return errors.DatabaseError("failed to retrieve template", err)
+	}
+
+	template.Name = input.Name
+	template.Type = input.Type
+	template.Price = input.Price
+	template.Thumbnail = input.Thumbnail
+	template.IsActive = input.IsActive
+
 	if err := s.repo.UpdateTemplate(ctx, template); err != nil {
-		s.log.Error("Failed to update template", err, "id", template.ID)
+		s.log.Error("Failed to update template", err, "id", id)
 		return errors.DatabaseError("failed to update template", err)
 	}
 	return nil

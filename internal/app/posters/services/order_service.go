@@ -2,43 +2,37 @@ package services
 
 import (
 	"context"
-	stdErrors "errors" // Import standard errors package
+	stdErrors "errors"
 	"fmt"
 	"time"
 
+	dto "github.com/codetheuri/poster-gen/internal/app/posters/handlers/dto"
 	"github.com/codetheuri/poster-gen/internal/app/posters/models"
 	"github.com/codetheuri/poster-gen/internal/app/posters/repositories"
 	"github.com/codetheuri/poster-gen/pkg/errors"
 	"github.com/codetheuri/poster-gen/pkg/logger"
-	// "github.com/codetheuri/poster-gen/pkg/mpesa" // Placeholder for M-Pesa SDK
+
+	// "github.com/codetheuri/poster-gen/pkg/mpesa"
 	"github.com/codetheuri/poster-gen/pkg/validators"
 	"gorm.io/gorm"
 )
 
-// OrderSubService interface for order operations
 type OrderSubService interface {
-	CreateOrder(ctx context.Context, userID uint, totalAmount int) (*models.Order, error)
+	CreateOrder(ctx context.Context, userID uint, input *dto.OrderInput) (*dto.OrderResponse, error)
 	ProcessPayment(ctx context.Context, orderID uint, phoneNumber string) error
-	GetOrderByID(ctx context.Context, id uint) (*models.Order, error)
-	UpdateOrder(ctx context.Context, order *models.Order) error
+	GetOrderByID(ctx context.Context, id uint) (*dto.OrderResponse, error)
+	UpdateOrder(ctx context.Context, id uint, input *dto.OrderInput) error
 	DeleteOrder(ctx context.Context, id uint) error
-}
-
-// OrderInput defines the input data for creating an order
-type OrderInput struct {
-	TotalAmount int `json:"total_amount" validate:"required,min=0"`
 }
 
 type orderSubService struct {
 	repo      repositories.OrderSubRepository
 	validator *validators.Validator
 	log       logger.Logger
-	// mpesa     mpesa.Client // Placeholder for M-Pesa client
+	// mpesa     mpesa.Client
 }
 
-// NewOrderSubService constructor
 func NewOrderSubService(repo repositories.OrderSubRepository, validator *validators.Validator, log logger.Logger) OrderSubService {
-	// Initialize M-Pesa client (e.g., with Daraja API credentials) - add in real impl
 	// mpesaClient := mpesa.NewClient("consumer_key", "consumer_secret", "sandbox") // Example
 	return &orderSubService{
 		repo:      repo,
@@ -48,10 +42,9 @@ func NewOrderSubService(repo repositories.OrderSubRepository, validator *validat
 	}
 }
 
-func (s *orderSubService) CreateOrder(ctx context.Context, userID uint, totalAmount int) (*models.Order, error) {
-	s.log.Info("Creating order", "user_id", userID, "total_amount", totalAmount)
+func (s *orderSubService) CreateOrder(ctx context.Context, userID uint, input *dto.OrderInput) (*dto.OrderResponse, error) {
+	s.log.Info("Creating order", "user_id", userID, "total_amount", input.TotalAmount)
 
-	input := &OrderInput{TotalAmount: totalAmount}
 	validationErrors := s.validator.Struct(input)
 	if validationErrors != nil {
 		s.log.Warn("Validation failed for order input", validationErrors)
@@ -62,7 +55,7 @@ func (s *orderSubService) CreateOrder(ctx context.Context, userID uint, totalAmo
 	order := &models.Order{
 		UserID:      userID,
 		OrderNumber: orderNumber,
-		TotalAmount: totalAmount,
+		TotalAmount: input.TotalAmount,
 		Status:      "pending",
 	}
 
@@ -71,8 +64,14 @@ func (s *orderSubService) CreateOrder(ctx context.Context, userID uint, totalAmo
 		return nil, errors.DatabaseError("failed to save order", err)
 	}
 
-	s.log.Info("Order created successfully", "order_id", order.ID)
-	return order, nil
+	resp := &dto.OrderResponse{
+		ID:          order.ID,
+		UserID:      order.UserID,
+		OrderNumber: order.OrderNumber,
+		TotalAmount: order.TotalAmount,
+		Status:      order.Status,
+	}
+	return resp, nil
 }
 
 func (s *orderSubService) ProcessPayment(ctx context.Context, orderID uint, phoneNumber string) error {
@@ -92,25 +91,23 @@ func (s *orderSubService) ProcessPayment(ctx context.Context, orderID uint, phon
 		return errors.BadRequestError("order is not in pending state", nil)
 	}
 
-	// Placeholder for M-Pesa STK Push (replace with real SDK call)
 	// receipt, err := s.mpesa.STKPush(phoneNumber, order.TotalAmount, order.OrderNumber)
-	if err != nil {
-		s.log.Error("Failed to process M-Pesa payment", err)
-		return errors.PaymentError("failed to process payment", err)
-	}
+	// if err != nil {
+	// 	s.log.Error("Failed to process M-Pesa payment", err)
+	// 	return errors.PaymentError("failed to process payment", err)
+	// }
 
-	order.Status = "paid"
-	// order.MpesaReceipt = receipt
-	if err := s.repo.UpdateOrder(ctx, order); err != nil {
-		s.log.Error("Failed to update order after payment", err, "order_id", orderID)
-		return errors.DatabaseError("failed to update order", err)
-	}
+	// order.Status = "paid"
+	// order.MpesaReceipt = &receipt
+	// if err := s.repo.UpdateOrder(ctx, order); err != nil {
+	// 	s.log.Error("Failed to update order after payment", err, "order_id", orderID)
+	// 	return errors.DatabaseError("failed to update order", err)
+	// }
 
-	// s.log.Info("Payment processed successfully", "order_id", orderID, "receipt", receipt)
 	return nil
 }
 
-func (s *orderSubService) GetOrderByID(ctx context.Context, id uint) (*models.Order, error) {
+func (s *orderSubService) GetOrderByID(ctx context.Context, id uint) (*dto.OrderResponse, error) {
 	s.log.Info("Getting order by ID", "id", id)
 	order, err := s.repo.GetOrderByID(ctx, id)
 	if err != nil {
@@ -121,13 +118,33 @@ func (s *orderSubService) GetOrderByID(ctx context.Context, id uint) (*models.Or
 		s.log.Error("Failed to get order", err, "id", id)
 		return nil, errors.DatabaseError("failed to retrieve order", err)
 	}
-	return order, nil
+	resp := &dto.OrderResponse{
+		ID:           order.ID,
+		UserID:       order.UserID,
+		OrderNumber:  order.OrderNumber,
+		TotalAmount:  order.TotalAmount,
+		Status:       order.Status,
+		MpesaReceipt: &order.MpesaReceipt,
+	}
+	return resp, nil
 }
 
-func (s *orderSubService) UpdateOrder(ctx context.Context, order *models.Order) error {
-	s.log.Info("Updating order", "id", order.ID)
+func (s *orderSubService) UpdateOrder(ctx context.Context, id uint, input *dto.OrderInput) error {
+	s.log.Info("Updating order", "id", id)
+
+	order, err := s.repo.GetOrderByID(ctx, id)
+	if err != nil {
+		if stdErrors.Is(err, gorm.ErrRecordNotFound) {
+			s.log.Warn("Order not found", "id", id)
+			return errors.NotFoundError("order not found", err)
+		}
+		s.log.Error("Failed to get order for update", err, "id", id)
+		return errors.DatabaseError("failed to retrieve order", err)
+	}
+
+	order.TotalAmount = input.TotalAmount // Extend with other fields as needed
 	if err := s.repo.UpdateOrder(ctx, order); err != nil {
-		s.log.Error("Failed to update order", err, "id", order.ID)
+		s.log.Error("Failed to update order", err, "id", id)
 		return errors.DatabaseError("failed to update order", err)
 	}
 	return nil

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>M-Pesa Agent Poster</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&display=swap');
+
+        /* --- THE DEFINITIVE MARGIN FIX --- */
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        html, body {
+            width: 210mm;
+            height: 297mm;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #FFFFFF;
+        }
+        /* --- END FIX --- */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            background: #009933;
+            text-align: center;
+            padding: 30px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .header-logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            color: white;
+        }
+        .header-logo-container span {
+            font-size: 52px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        .mpesa-icon-svg {
+            height: 50px;
+            width: auto;
+            position: relative;
+            top: -2px;
+        }
+
+        /* --- MAIN CONTENT --- */
+        .content {
+            flex: 1;
+            background-color: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 30px;
+        }
+
+        .number-section-label {
+            font-size: 22px;
+            font-weight: 700;
+            color: #009933;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+        }
+
+        .number-boxes {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 35px;
+        }
+        
+        .digit-box {
+            border: 3px solid #009933;
+            width: 80px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 68px;
+            font-weight: 800;
+            color: #333;
+            border-radius: 6px;
+        }
+        
+        .agent-name-section {
+            display: flex;
+            align-items: stretch;
+            margin-top: 15px;
+            width: 90%;
+            max-width: 700px;
+        }
+        .agent-name-label {
+            background-color: #009933;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 6px 0 0 6px;
+            border: 3px solid #009933;
+            border-right: none;
+            white-space: nowrap;
+        }
+        .agent-name-value {
+            flex: 1;
+            border: 3px solid #009933;
+            border-radius: 0 6px 6px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            margin-top: auto; /* Pushes footer to the bottom */
+            padding: 25px;
+            text-align: center;
+            border-top: 2px solid #e0e0e0;
+            width: 100%;
+        }
+        .footer p {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 12px;
+        }
+        .footer .tagline {
+            font-weight: 700;
+        }
+        .safaricom-logo-svg {
+            width: 180px; /* Adjust size as needed */
+            height: auto;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-logo-container">
+                <span>M</span>
+                <!-- THE FIX: Replaced <img> with inline <svg> -->
+                <svg class="mpesa-icon-svg" viewBox="0 0 32 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M29.5385 57.1429H2.46154C1.10154 57.1429 0 56.0238 0 54.6429V3.35714C0 1.97619 1.10154 0.857143 2.46154 0.857143H29.5385C30.8985 0.857143 32 1.97619 32 3.35714V54.6429C32 56.0238 30.8985 57.1429 29.5385 57.1429Z" fill="#A7D3A1"/>
+                    <path d="M26.4615 47.7143H5.53846C4.17846 47.7143 3.07692 46.5952 3.07692 45.2143V12.7857C3.07692 11.4048 4.17846 10.2857 5.53846 10.2857H26.4615C27.8215 10.2857 28.9231 11.4048 28.9231 12.7857V45.2143C28.9231 46.5952 27.8215 47.7143 26.4615 47.7143Z" fill="white"/>
+                    <path d="M25.8462 30.5714C23.0154 26.881 17.6615 27.4286 17.6615 27.4286C17.6615 27.4286 21.0462 33.4286 25.2308 34.6667C29.4154 35.9048 31.3846 32.4286 31.3846 32.4286C31.3846 32.4286 28.6769 34.2619 25.8462 30.5714Z" fill="#D32F2F"/>
+                    <path d="M17.6615 27.4286C17.6615 27.4286 12.3077 28.5238 9.47692 32.2143C6.64615 35.9048 6.95385 39.381 6.95385 39.381C6.95385 39.381 7.26154 35.3333 11.4462 34.0952C15.6308 32.8571 17.6615 27.4286 17.6615 27.4286Z" fill="#A22626"/>
+                </svg>
+                <span>PESA</span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="number-section-label">Agent Number</div>
+            <div class="number-boxes">
+                {{range .agent_numberSplit}}
+                    <div class="digit-box">{{.}}</div>
+                {{end}}
+            </div>
+            
+            <div class="number-section-label">Store Number</div>
+            <div class="number-boxes">
+                {{range .store_numberSplit}}
+                    <div class="digit-box">{{.}}</div>
+                {{end}}
+            </div>
+            
+            <div class="agent-name-section">
+                <div class="agent-name-label">AGENT NAME</div>
+                <div class="agent-name-value">{{.agent_name}}</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Use mySafaricom App or dial *234#</p>
+            <p class="tagline">Simple • Transparent • Honest</p>
+            <p>FOR YOU</p>
+            <!-- THE FIX: Replaced <img> with inline <svg> -->
+            <svg class="safaricom-logo-svg" viewBox="0 0 203 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M194.759 10.9922C194.759 4.60938 190.573 0 184.582 0C178.591 0 174.405 4.60938 174.405 10.9922C174.405 17.375 178.591 21.9844 184.582 21.9844C190.573 21.9844 194.759 17.375 194.759 10.9922ZM177.38 10.9922C177.38 6.42578 180.491 2.85938 184.582 2.85938C188.673 2.85938 191.784 6.42578 191.784 10.9922C191.784 15.5586 188.673 19.125 184.582 19.125C180.491 19.125 177.38 15.5586 177.38 10.9922Z" fill="#43A047"/>
+                <path d="M197.808 1.48828H200.868V21.4883H197.808V1.48828Z" fill="#43A047"/>
+                <path d="M165.753 21.4883H159.237L153.21 1.48828H156.612L160.917 16.3906L165.202 1.48828H168.624L165.753 21.4883Z" fill="#43A047"/>
+                <path d="M145.418 18.2539C145.418 14.8945 143.715 12.8711 140.489 12.8711C138.563 12.8711 137.286 13.8828 136.219 15.0117L135.942 12.9883H133.251V21.4883H135.942V15.7773C135.942 14.0742 136.794 13.043 138.284 13.043C139.542 13.043 140.233 13.7539 140.233 15.457V21.4883H142.924V15.5156C142.924 13.8125 143.755 12.7812 145.245 12.7812C146.503 12.7812 147.194 13.4922 147.194 15.1953V21.4883H149.886V14.6523C149.886 12.2852 148.514 10.9922 146.128 10.9922C144.657 10.9922 143.323 11.5664 142.415 12.5977L142.157 11.0508H140.435L138.807 21.4883H137.354L133.251 11.0508H131.227L132.854 21.4883H129.894L127.358 1.48828H130.418L132.122 15.0117L134.489 1.48828H136.874L134.85 15.3984C135.542 12.0195 137.989 10.1562 140.584 10.1562C142.608 10.1562 144.18 11.1484 145.108 12.5L145.418 10.3711H147.345L146.01 21.4883H148.243L150.838 10.3711H152.466L149.886 21.4883H145.418V18.2539Z" fill="#43A047"/>
+                <path d="M124.08 21.9844C118.089 21.9844 113.903 17.375 113.903 10.9922C113.903 4.60938 118.089 0 124.08 0C130.071 0 134.257 4.60938 134.257 10.9922C134.257 17.375 130.071 21.9844 124.08 21.9844ZM116.875 10.9922C116.875 15.5586 119.986 19.125 124.08 19.125C128.171 19.125 131.282 15.5586 131.282 10.9922C131.282 6.42578 128.171 2.85938 124.08 2.85938C119.986 2.85938 116.875 6.42578 116.875 10.9922Z" fill="#43A047"/>
+                <path d="M106.398 1.48828H111.964V21.4883H106.398V1.48828Z" fill="#43A047"/>
+                <path d="M90.3115 21.4883V13.8828L83.0752 1.48828H87.6416L92.1084 10.5898L96.5752 1.48828H101.142L93.9053 13.8828V21.4883H90.3115Z" fill="#43A047"/>
+                <path d="M73.5434 21.9844C67.5522 21.9844 63.3661 17.375 63.3661 10.9922C63.3661 4.60938 67.5522 0 73.5434 0C79.5346 0 83.7207 4.60938 83.7207 10.9922C83.7207 17.375 79.5346 21.9844 73.5434 21.9844ZM66.3383 10.9922C66.3383 15.5586 69.4487 19.125 73.5434 19.125C77.6342 19.125 80.7446 15.5586 80.7446 10.9922C80.7446 6.42578 77.6342 2.85938 73.5434 2.85938C69.4487 2.85938 66.3383 6.42578 66.3383 10.9922Z" fill="#43A047"/>
+                <path d="M56.4011 21.4883L48.4441 1.48828H52.1863L58.1218 15.9336V1.48828H60.8132V21.4883H58.4285L51.3347 4.60938L53.7956 21.4883H56.4011Z" fill="#43A047"/>
+                <path d="M42.2736 21.4883V1.48828H44.965V21.4883H42.2736Z" fill="#43A047"/>
+                <path d="M35.6312 21.9844C29.6399 21.9844 25.4539 17.375 25.4539 10.9922C25.4539 4.60938 29.6399 0 35.6312 0C41.6224 0 45.8084 4.60938 45.8084 10.9922C45.8084 17.375 41.6224 21.9844 35.6312 21.9844ZM28.4261 10.9922C28.4261 15.5586 31.5365 19.125 35.6312 19.125C39.7219 19.125 42.8323 15.5586 42.8323 10.9922C42.8323 6.42578 39.7219 2.85938 35.6312 2.85938C31.5365 2.85938 28.4261 6.42578 28.4261 10.9922Z" fill="#43A047"/>
+                <path d="M21.932 21.4883H19.2407L13.2132 1.48828H16.6155L20.5794 15.2227L20.8992 1.48828H23.5906L22.2562 15.2227L26.2201 1.48828H29.6224L23.5906 21.4883H21.932Z" fill="#43A047"/>
+                <path d="M0 11.0508C0 4.66797 4.18604 0.0585938 10.1772 0.0585938C14.0047 0.0585938 17.1575 2.14062 18.9038 5.35156L16.2709 6.89844C15.0131 4.75781 12.8715 3.32812 10.1772 3.32812C6.15479 3.32812 2.92041 6.95703 2.92041 11.0508C2.92041 15.1445 6.15479 18.7734 10.1772 18.7734C12.8715 18.7734 15.0131 17.3438 16.2709 15.2031L18.9038 16.75C17.1575 19.9609 14.0047 22.043 10.1772 22.043C4.18604 22.043 0 17.4336 0 11.0508Z" fill="#D32F2F"/>
+            </svg>
+        </div>
+    </div>
+</body>
+</html>
+

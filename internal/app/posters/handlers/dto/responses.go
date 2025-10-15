@@ -19,6 +19,7 @@ type TemplateResponse struct {
     Price     int    `json:"price"`
     Thumbnail string `json:"thumbnail"`
     IsActive  bool   `json:"is_active"`
+    Layout    string `json:"layout"`
 }
 
 // OrderResponse represents the response structure for an order

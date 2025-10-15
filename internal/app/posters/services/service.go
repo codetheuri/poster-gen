@@ -22,7 +22,7 @@ func NewPosterService(
 	log logger.Logger,
 ) *PosterService {
 	return &PosterService{
-		PosterService:         NewPosterSubService(repos.PosterRepo, validator, log, templateRepo),
+		PosterService:         NewPosterSubService(repos.PosterRepo, validator, log, templateRepo, "./templates", "./posters"),
 		PosterTemplateService: NewPosterTemplateSubService(repos.PosterTemplateRepo, validator, log),
 		OrderService:          NewOrderSubService(repos.OrderRepo, validator, log),
 	}

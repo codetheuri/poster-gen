@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { 
+            font-family: 'Arial', sans-serif; 
+            margin: 0; 
+            padding: 40px;
+            background-color: "{{.PrimaryColor | default "#0369a1"}}";
+            color: rgb(12, 234, 52);
+        }
+        .container { 
+            background: rgb(7, 228, 33); 
+            color: #333333;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .business-name {
+            /* color: "{{.PrimaryColor | default "#0369a1"}}"; */
+            color: turquoise;
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .payment-info {
+            background: "{{.SecondaryColor | default "#0ea5e9"}}15";
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .qr-code {
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="business-name">{{.BusinessName}}</div>
+        
+        <div class="payment-info">
+            <h2>M-PESA PAYMENT</h2>
+            <p><strong>Till Number:</strong> {{.till_number}}</p>
+            <p>Go to M-PESA → Lipa Na M-PESA → Buy Goods</p>
+        </div>
+        
+        <div class="qr-code">
+            <p>Scan to pay instantly</p>
+            <!-- QR code would be generated here -->
+        </div>
+        
+        <div class="footer">
+            <p>Thank you for your business!</p>
+        </div>
+    </div>
+</body>
+</html>

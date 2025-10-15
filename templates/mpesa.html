@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>M-Pesa Poster</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+        /* This is crucial for ensuring a single-page PDF with no margins */
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #FFFFFF; /* The page itself is white */
+        }
+
+        /* The main container that fills the A4 page */
+        .container {
+            width: 210mm;
+            height: 297mm;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            background: #009933;
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            /* Placeholder for M-Pesa logo if needed */
+        }
+
+        /* --- MAIN CONTENT (The white area) --- */
+        .content {
+            flex: 1; /* This makes the white area fill all available space */
+            background-color: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px; /* Controls top/bottom space */
+        }
+
+        .content h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 25px;
+        }
+
+        /* Individual digit boxes for the Till Number */
+        .till-number-boxes {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px; /* Space between numbers and name */
+        }
+        
+        .digit-box {
+            border: 2px solid #555;
+            width: 55px;
+            height: 75px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 700;
+            color: #333;
+            border-radius: 4px;
+        }
+        
+        /* Business Name styling */
+        .business-name {
+            font-size: 38px;
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+            padding: 15px 0;
+            border-bottom: 2px solid #ccc;
+            border-top: 2px solid #ccc;
+            width: 90%;
+            margin-bottom: auto; /* Pushes QR code down if there's space */
+        }
+
+        .qr-section {
+            margin-top: 40px; /* Space above QR code */
+            text-align: center;
+        }
+
+        .scan-text {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            background-color: #FFFFFF;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+            margin-top: auto; /* Ensures footer is at the bottom */
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .footer-taglines {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .safaricom-logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: #009933;
+            /* In a real scenario, you'd use an <img
+            tag for the Safaricom logo */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>LIPA NA M-PESA</h1>
+        </div>
+        
+        <div class="content">
+            <h2>BUY GOODS TILL NUMBER</h2>
+            
+            <div class="till-number-boxes">
+                {{range .TillNumberSplit}}
+                    <div class="digit-box">{{.}}</div>
+                {{end}}
+            </div>
+            
+            <div class="business-name">{{.BusinessName}}</div>
+            
+            {{if .QRCodeBase64}}
+            <div class="qr-section">
+                <img src="data:image/png;base64,{{.QRCodeBase64}}" alt="QR Code" style="width: 140px; height: 140px;">
+                <div class="scan-text">Use mySafaricom App or dial *234#</div>
+            </div>
+            {{end}}
+        </div>
+        
+        <div class="footer">
+            <div class="footer-taglines">
+                <p>Simple • Transparent • Honest</p>
+                <p style="margin-top: 8px;">FOR YOU</p>
+            </div>
+            <div class="safaricom-logo">Safaricom</div>
+        </div>
+    </div>
+</body>
+</html>

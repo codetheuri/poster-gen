@@ -10,6 +10,7 @@ import (
 	"github.com/codetheuri/poster-gen/pkg/errors"
 	"github.com/codetheuri/poster-gen/pkg/logger"
 	"github.com/codetheuri/poster-gen/pkg/validators"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -45,11 +46,14 @@ func (s *posterTemplateSubService) CreateTemplate(ctx context.Context, input *dt
 	}
 
 	template := &models.PosterTemplate{
-		Name:      input.Name,
-		Type:      input.Type,
-		Price:     input.Price,
-		Thumbnail: input.Thumbnail,
-		IsActive:  input.IsActive,
+		Name:           input.Name,
+		Type:           input.Type,
+		Price:          input.Price,
+		Thumbnail:      input.Thumbnail,
+		IsActive:       input.IsActive,
+		Layout:         input.Layout,
+		RequiredFields: datatypes.JSON(input.RequiredFields),
+		
 	}
 
 	if err := s.repo.CreateTemplate(ctx, template); err != nil {
@@ -64,6 +68,7 @@ func (s *posterTemplateSubService) CreateTemplate(ctx context.Context, input *dt
 		Price:     template.Price,
 		Thumbnail: template.Thumbnail,
 		IsActive:  template.IsActive,
+		Layout:    template.Layout,
 	}
 	return resp, nil
 }

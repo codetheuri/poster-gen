@@ -68,22 +68,8 @@ func (h *postersHandler) GeneratePoster(w http.ResponseWriter, r *http.Request) 
 		web.RespondError(w, appErrors.ValidationError("validation failed", nil, validationErrors), http.StatusBadRequest)
 		return
 	}
-
-	userID, ok := getUserIDFromContext(r.Context())
-	if !ok {
-		h.log.Warn("Handler: UserID not found in context for GeneratePoster")
-		web.RespondError(w, appErrors.AuthError("authentication context missing", nil), http.StatusUnauthorized)
-		return
-	}
-
-	orderIDStr := r.URL.Query().Get("order_id")
 	templateIDStr := r.URL.Query().Get("template_id")
-	orderID, err := strconv.ParseUint(orderIDStr, 10, 64)
-	if err != nil || orderID > math.MaxUint {
-		h.log.Warn("Handler: Invalid or missing order_id", err, "order_id", orderIDStr)
-		web.RespondError(w, appErrors.ValidationError("invalid order_id", nil, nil), http.StatusBadRequest)
-		return
-	}
+
 	templateID, err := strconv.ParseUint(templateIDStr, 10, 64)
 	if err != nil || templateID > math.MaxUint {
 		h.log.Warn("Handler: Invalid or missing template_id", err, "template_id", templateIDStr)
@@ -92,7 +78,7 @@ func (h *postersHandler) GeneratePoster(w http.ResponseWriter, r *http.Request) 
 	}
 
 	ctx := r.Context()
-	poster, err := h.service.PosterService.GeneratePoster(ctx, uint(userID), uint(orderID), uint(templateID), &input)
+	poster, err := h.service.PosterService.GeneratePoster(ctx, uint(templateID), &input)
 	if err != nil {
 		h.log.Error("Handler: Failed to generate poster through service", err)
 		h.handleAppError(w, err, "generate poster")

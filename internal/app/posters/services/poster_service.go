@@ -24,7 +24,7 @@ import (
 )
 
 type PosterSubService interface {
-	GeneratePoster(ctx context.Context, userID uint, orderID uint, templateID uint, input *dto.PosterInput) (*dto.PosterResponse, error)
+	GeneratePoster(ctx context.Context, templateID uint, input *dto.PosterInput) (*dto.PosterResponse, error)
 	GetPosterByID(ctx context.Context, id uint) (*dto.PosterResponse, error)
 	UpdatePoster(ctx context.Context, id uint, input *dto.PosterInput) error
 	DeletePoster(ctx context.Context, id uint) error
@@ -64,8 +64,8 @@ func NewPosterSubService(
 }
 
 // GeneratePoster - Main function that orchestrates the entire process
-func (s *posterSubService) GeneratePoster(ctx context.Context, userID uint, orderID uint, templateID uint, input *dto.PosterInput) (*dto.PosterResponse, error) {
-	s.log.Info("Generating poster", "user_id", userID, "order_id", orderID, "template_id", templateID)
+func (s *posterSubService) GeneratePoster(ctx context.Context, templateID uint, input *dto.PosterInput) (*dto.PosterResponse, error) {
+	s.log.Info("Generating poster", "template_id", templateID)
 
 	// Validate input
 	validationErrors := s.validator.Struct(input)
@@ -87,7 +87,7 @@ func (s *posterSubService) GeneratePoster(ctx context.Context, userID uint, orde
 
 	// Prepare template data for HTML rendering
 	templateData := map[string]interface{}{
-		"BusinessName": input.BusinessName,
+		"business_name": input.BusinessName,
 	}
 	for key, value := range input.Data {
 		templateData[key] = value
@@ -118,8 +118,8 @@ func (s *posterSubService) GeneratePoster(ctx context.Context, userID uint, orde
 	}
 	// Create poster record
 	poster := &models.Poster{
-		UserID:       userID,
-		OrderID:      orderID,
+		UserID:       nil,
+		OrderID:      nil,
 		TemplateID:   templateID,
 		BusinessName: input.BusinessName,
 		DynamicData:  dynamicDataJSON, // <-- Store the entire dynamic data map as JSON
@@ -134,8 +134,6 @@ func (s *posterSubService) GeneratePoster(ctx context.Context, userID uint, orde
 
 	resp := &dto.PosterResponse{
 		ID:           poster.ID,
-		UserID:       poster.UserID,
-		OrderID:      poster.OrderID,
 		TemplateID:   poster.TemplateID,
 		BusinessName: poster.BusinessName,
 		PDFURL:       poster.PDFURL,
@@ -190,7 +188,7 @@ func (s *posterSubService) htmlToPDF(ctx context.Context, htmlContent string, bu
 		}),
 		// 2. Wait until the page is loaded
 		chromedp.WaitVisible("body", chromedp.ByQuery),
-		// chromedp.Sleep(1*time.Second), // Give some time for all resources to load
+		chromedp.Sleep(2*time.Second), // Give some time for all resources to load
 		chromedp.ActionFunc(func(ctx context.Context) error {
 
 			buf, _, err := page.PrintToPDF().
@@ -243,9 +241,7 @@ func (s *posterSubService) GetPosterByID(ctx context.Context, id uint) (*dto.Pos
 	}
 
 	return &dto.PosterResponse{
-		ID:           poster.ID,
-		UserID:       poster.UserID,
-		OrderID:      poster.OrderID,
+		ID: poster.ID,
 		TemplateID:   poster.TemplateID,
 		BusinessName: poster.BusinessName,
 		PDFURL:       poster.PDFURL,

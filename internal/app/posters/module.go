@@ -39,12 +39,13 @@ func (m *Module) RegisterRoutes(r chi.Router) {
 	// Public routes (e.g., listing templates)
 	r.Group(func(r chi.Router) {
 		r.Get("/posters/templates", m.Handler.GetActiveTemplates)
+		r.Post("/posters/generate", m.Handler.GeneratePoster)
 	})
 
 	// Authenticated routes (require JWT)
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Authenticator(m.TokenService, m.log))
-		r.Post("/posters/generate", m.Handler.GeneratePoster)
+
 		r.Get("/posters/{id}", m.Handler.GetPosterByID)
 		r.Put("/posters/{id}", m.Handler.UpdatePoster)
 		r.Delete("/posters/{id}", m.Handler.DeletePoster)
@@ -55,7 +56,7 @@ func (m *Module) RegisterRoutes(r chi.Router) {
 		r.Delete("/posters/orders/{id}", m.Handler.DeleteOrder)
 		r.Post("/posters/templates", m.Handler.CreateTemplate)        // New
 		r.Get("/posters/templates/{id}", m.Handler.GetTemplateByID)   // New
-		r.Patch("/posters/templates/{id}", m.Handler.UpdateTemplate)    // New
+		r.Patch("/posters/templates/{id}", m.Handler.UpdateTemplate)  // New
 		r.Delete("/posters/templates/{id}", m.Handler.DeleteTemplate) // New
 	})
 

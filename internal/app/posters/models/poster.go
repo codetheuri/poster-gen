@@ -37,8 +37,9 @@ import (
 
 type Poster struct {
 	gorm.Model
-	UserID       uint   `json:"user_id" gorm:"not null;index;constraint:OnDelete:CASCADE"`
-	OrderID      uint   `json:"order_id" gorm:"not null;index"`
+
+	UserID     *uint  `json:"user_id,omitempty" gorm:"index;constraint:OnDelete:SET NULL"`
+    OrderID    *uint  `json:"order_id,omitempty" gorm:"index"`
 	TemplateID   uint   `json:"template_id" gorm:"not null;index"`
 	BusinessName string `json:"business_name" gorm:"type:varchar(100);not null"` // Keep common fields
 	DynamicData datatypes.JSON `json:"dynamic_data" gorm:"not null"`

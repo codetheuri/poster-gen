@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/codetheuri/poster-gen/config"
@@ -35,8 +36,8 @@ func Run(cfg *config.Config, log logger.Logger) error {
 	var appModules []modules.Module
 	authMod := authModule.NewModule(db, log, appValidator, cfg)
 	// Example of adding a new module))
-	appModules = append(appModules, authModule.NewModule(db, log, appValidator, cfg)) // Example of adding a new module
-	appModules = append(appModules, postersModule.NewModule(db, log, appValidator,authMod.TokenService))    // Example of adding a new module
+	appModules = append(appModules, authModule.NewModule(db, log, appValidator, cfg))                     // Example of adding a new module
+	appModules = append(appModules, postersModule.NewModule(db, log, appValidator, authMod.TokenService)) // Example of adding a new module
 
 	//register routes from all modules
 	mainRouter := router.NewRouter(log)
@@ -51,10 +52,16 @@ func Run(cfg *config.Config, log logger.Logger) error {
 	handler = middleware.RequestID()(handler)
 
 	//Start Server
-	serverAddr := fmt.Sprintf(":%d", cfg.ServerPort)
-	// serverAddr := ":8080"
-	log.Info(fmt.Sprintf("Server starting on %v", serverAddr))
-	if err := http.ListenAndServe(serverAddr, handler); err != nil {
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.ServerPort))
+	if err != nil {
+		return fmt.Errorf("failed to start listener: %w", err)
+	}
+
+	// get the actual address assigned (useful if port was 0)
+	actualAddr := ln.Addr().(*net.TCPAddr)
+	log.Info(fmt.Sprintf("Server is listening on port %d", actualAddr.Port))
+
+	if err := http.Serve(ln, handler); err != nil {
 		return fmt.Errorf("server failed to start: %w", err)
 	}
 

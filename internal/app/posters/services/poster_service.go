@@ -144,25 +144,6 @@ func (s *posterSubService) GeneratePoster(ctx context.Context, userID uint, orde
 	return resp, nil
 }
 
-// generatePosterPDF - Converts HTML template to PDF
-// func (s *posterSubService) generatePosterPDF(data map[string]interface{}, templateName string) (string, error) {
-// 	// 1. Render HTML template
-// 	htmlContent, err := s.renderHTMLTemplate(data, templateName)
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to render HTML template: %w", err)
-// 	}
-
-// 	// 2. Convert HTML to PDF
-// 	pdfPath := filepath.Join(s.outputDir, fmt.Sprintf("%s_%d.pdf",
-// 		data["BusinessName"], time.Now().Unix()))
-
-// 	if err := s.htmlToPDF(htmlContent, pdfPath); err != nil {
-// 		return "", fmt.Errorf("failed to generate PDF: %w", err)
-// 	}
-
-// 	return pdfPath, nil
-// }
-
 // renderHTMLTemplate - Renders HTML template with data
 func (s *posterSubService) renderHTMLTemplate(data map[string]interface{}, templateName string) (string, error) {
 	templatePath := filepath.Join(s.templatesDir, templateName)
@@ -197,8 +178,6 @@ func (s *posterSubService) htmlToPDF(ctx context.Context, htmlContent string, bu
 	var pdfBuffer []byte
 	pdfPath := filepath.Join(s.outputDir, fmt.Sprintf("%s_%d.pdf", businessName, time.Now().Unix()))
 
-	// The magic: run chromedp tasks
-	var buf []byte
 	err := chromedp.Run(ctx,
 		// 1. Navigate to a blank page with the rendered HTML content
 		chromedp.Navigate("about:blank"),
@@ -211,20 +190,20 @@ func (s *posterSubService) htmlToPDF(ctx context.Context, htmlContent string, bu
 		}),
 		// 2. Wait until the page is loaded
 		chromedp.WaitVisible("body", chromedp.ByQuery),
-		// chromedp.WaitVisible("#mpesa-logo-icon", chromedp.ByID),
-		// chromedp.WaitVisible("#safaricom-logo-img", chromedp.ByID),
-		chromedp.Sleep(5*time.Second),    // Give some time for images to load
-		// chromedp.Sleep(5*time.Second),    // DEBUG: Longer wait to ensure everything loads
-		chromedp.CaptureScreenshot(&buf), // DEBUG: Capture screenshot to verify rendering
+		// chromedp.Sleep(1*time.Second), // Give some time for all resources to load
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			if err := os.WriteFile("debug_screenshot.png", buf, 0644); err != nil {
-				return err
-			}
-			return nil
-		}),
-		
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			buf, _, err := page.PrintToPDF().WithPrintBackground(true).Do(ctx)
+
+			buf, _, err := page.PrintToPDF().
+				WithLandscape(true).
+				WithPreferCSSPageSize(true).
+				WithPaperWidth(11.7).
+				WithPaperHeight(8.28).
+				WithPrintBackground(true).
+				WithMarginTop(0).
+				WithMarginBottom(0).
+				WithMarginLeft(0).
+				WithMarginRight(0).
+				Do(ctx)
 			if err != nil {
 				return err
 			}

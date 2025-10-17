@@ -129,11 +129,27 @@ func (s *posterTemplateSubService) UpdateTemplate(ctx context.Context, id uint, 
 		return errors.DatabaseError("failed to retrieve template", err)
 	}
 
-	template.Name = input.Name
-	template.Type = input.Type
-	template.Price = input.Price
-	template.Thumbnail = input.Thumbnail
-	template.IsActive = input.IsActive
+	// Apply only provided fields
+	if input.Name != "" {
+		template.Name = input.Name
+	}
+	if input.Type != "" {
+		template.Type = input.Type
+	}
+	if input.Price != 0 {
+		template.Price = input.Price
+	}
+	// if input.Description != "" {
+	// 	template.Description = input.Description
+	// }
+	if input.Thumbnail != "" {
+		template.Thumbnail = input.Thumbnail
+	}
+
+	if len(input.RequiredFields) > 0 {
+		template.RequiredFields = datatypes.JSON(input.RequiredFields)
+	}
+	template.IsActive = input.IsActive // Always update IsActive if provided
 
 	if err := s.repo.UpdateTemplate(ctx, template); err != nil {
 		s.log.Error("Failed to update template", err, "id", id)
@@ -141,7 +157,6 @@ func (s *posterTemplateSubService) UpdateTemplate(ctx context.Context, id uint, 
 	}
 	return nil
 }
-
 func (s *posterTemplateSubService) DeleteTemplate(ctx context.Context, id uint) error {
 	s.log.Info("Deleting template", "id", id)
 	if err := s.repo.DeleteTemplate(ctx, id); err != nil {

@@ -59,7 +59,9 @@ func (r *posterTemplateSubRepository) GetActiveTemplates(ctx context.Context) ([
 
 func (r *posterTemplateSubRepository) UpdateTemplate(ctx context.Context, template *models.PosterTemplate) error {
 	r.log.Info("Updating poster template", "id", template.ID)
-	return r.db.WithContext(ctx).Save(template).Error
+	// return r.db.WithContext(ctx).Save(template).Error
+       return r.db.WithContext(ctx).Model(&models.PosterTemplate{}).Where("id = ?", template.ID).Updates(template).Error	
+// 
 }
 
 func (r *posterTemplateSubRepository) DeleteTemplate(ctx context.Context, id uint) error {

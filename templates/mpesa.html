@@ -2,31 +2,33 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>M-Pesa Poster</title>
+    <title>M-Pesa Buy Goods Poster</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&display=swap');
 
-        /* This is crucial for ensuring a single-page PDF with no margins */
-        @page {
+        /* --- THE DEFINITIVE MARGIN FIX --- */
+        /* @page {
             size: A4;
+            
             margin: 0;
-        }
-
-        * {
+        } */
+        html, body {
+            width: 210mm;
+            height: 297mm;
             margin: 0;
             padding: 0;
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #FFFFFF;
+        }
+        /* --- END FIX --- */
+
+        * {
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'Inter', Arial, sans-serif;
-            background-color: #FFFFFF; /* The page itself is white */
-        }
-
-        /* The main container that fills the A4 page */
         .container {
-            width: 210mm;
-            height: 297mm;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
         }
@@ -34,130 +36,132 @@
         /* --- HEADER --- */
         .header {
             background: #009933;
-            color: white;
             text-align: center;
-            padding: 30px 20px;
+            padding: 40px 20px; /* Increased padding */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-
-        .header h1 {
-            font-size: 36px;
+        .header-logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0px; /* Reduced gap for tighter logo */
+            color: white;
+        }
+        .header-logo-container span {
+            font-size: 72px; /* Increased font size */
             font-weight: 800;
             letter-spacing: 1px;
-            /* Placeholder for M-Pesa logo if needed */
+        }
+        .mpesa-icon-svg {
+            height: 65px; /* Increased icon size */
+            width: auto;
+            position: relative;
+            margin: 0 -15px; /* Negative margin to pull text closer */
         }
 
-        /* --- MAIN CONTENT (The white area) --- */
+        /* --- MAIN CONTENT --- */
         .content {
-            flex: 1; /* This makes the white area fill all available space */
+            flex: 1;
             background-color: #FFFFFF;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px 20px; /* Controls top/bottom space */
+            justify-content: center; /* Vertically centers the content */
+            padding: 20px;
         }
 
         .content h2 {
-            font-size: 24px;
+            font-size: 32px; /* Increased font size */
             font-weight: 700;
             color: #333;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            margin-bottom: 25px;
+            margin-bottom: 40px; /* Increased margin */
         }
 
         /* Individual digit boxes for the Till Number */
-        .till-number-boxes {
+        .number-boxes {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 25px; /* Space between numbers and name */
+            gap: 12px; /* Increased gap */
+            margin-bottom: 40px; /* Increased margin */
         }
         
         .digit-box {
-            border: 2px solid #555;
-            width: 55px;
-            height: 75px;
+            border: 2.5px solid #555; /* Slightly thicker border */
+            width: 75px;  /* Increased size */
+            height: 95px; /* Increased size */
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
+            font-size: 64px; /* Increased font size */
             font-weight: 700;
             color: #333;
-            border-radius: 4px;
+            border-radius: 6px;
         }
         
         /* Business Name styling */
         .business-name {
-            font-size: 38px;
+            font-size: 48px; /* Increased font size */
             font-weight: 700;
             color: #333;
             text-align: center;
-            padding: 15px 0;
-            border-bottom: 2px solid #ccc;
-            border-top: 2px solid #ccc;
+            padding: 20px 0;
+            border-bottom: 2.5px solid #ccc;
+            border-top: 2.5px solid #ccc;
             width: 90%;
-            margin-bottom: auto; /* Pushes QR code down if there's space */
-        }
-
-        .qr-section {
-            margin-top: 40px; /* Space above QR code */
-            text-align: center;
-        }
-
-        .scan-text {
-            font-size: 14px;
-            color: #666;
-            margin-top: 8px;
         }
 
         /* --- FOOTER --- */
         .footer {
-            background-color: #FFFFFF;
-            color: #333;
+            margin-top: auto; /* Pushes footer to the bottom */
+            padding: 25px;
             text-align: center;
-            padding: 20px;
-            margin-top: auto; /* Ensures footer is at the bottom */
             border-top: 2px solid #e0e0e0;
+            width: 100%;
         }
-        
-        .footer-taglines {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 20px;
+        .footer p {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 12px;
         }
-
-        .safaricom-logo {
-            font-size: 28px;
-            font-weight: 800;
-            color: #009933;
-            /* In a real scenario, you'd use an <img
-            tag for the Safaricom logo */
+        .footer .tagline {
+            font-weight: 700;
+        }
+        .safaricom-logo-container {
+            margin-top: 15px;
+        }
+        .safaricom-logo-image {
+            width: 180px;
+            height: auto;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>LIPA NA M-PESA</h1>
+            <div class="header-logo-container">
+                <span>LIPA NA M</span>
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 48 48" class="mpesa-icon-svg"> 
+                    <path fill="#aed580" d="M31.003,7.001l-0.001-5.5c0-0.828,0.672-1.5,1.5-1.5 c0.828,0,1.5,0.672,1.5,1.5v5.5H31.003z"></path><path fill="#aed580" d="M14.964,47.999h18.073c0.533,0,0.965-0.432,0.965-0.965V4.964c0-0.533-0.432-0.965-0.965-0.965 H14.964c-0.533,0-0.965,0.432-0.965,0.965v42.07C13.999,47.567,14.431,47.999,14.964,47.999z"></path><path fill="#fff" fill-rule="evenodd" d="M17.739,29.001h12.524c0.962,0,1.741-0.78,1.741-1.741V10.743 c0-0.962-0.78-1.741-1.741-1.741H17.739c-0.962,0-1.741,0.78-1.741,1.741V27.26C15.997,28.222,16.777,29.001,17.739,29.001z" clip-rule="evenodd"></path><path fill="#9b2310" fill-rule="evenodd" d="M12.001,22.001 c3.643-0.7,5.865-2.448,7-5c1.135,2.552,3.357,4.3,7,5H12.001z" clip-rule="evenodd"></path><path fill="#e60023" fill-rule="evenodd" d="M12.001,22.001 c4.273,0.867,6.476,1,11,1c5.076,0,11.712-1.939,14-6l-9-4C24.039,18.139,21.863,22.001,12.001,22.001z" clip-rule="evenodd"></path>
+                </svg>
+                <span>PESA</span>
+            </div>
         </div>
         
         <div class="content">
             <h2>BUY GOODS TILL NUMBER</h2>
             
-            <div class="till-number-boxes">
-                {{range .TillNumberSplit}}
+            <div class="number-boxes">
+                {{range .till_numberSplit}}
                     <div class="digit-box">{{.}}</div>
                 {{end}}
             </div>
             
-            <div class="business-name">{{.BusinessName}}</div>
-            
-            {{if .QRCodeBase64}}
-            <div class="qr-section">
-                <img src="data:image/png;base64,{{.QRCodeBase64}}" alt="QR Code" style="width: 140px; height: 140px;">
-                <div class="scan-text">Use mySafaricom App or dial *234#</div>
-            </div>
-            {{end}}
+            <div class="business-name">{{.business_name}}</div>
         </div>
         
         <div class="footer">
@@ -165,7 +169,9 @@
                 <p>Simple • Transparent • Honest</p>
                 <p style="margin-top: 8px;">FOR YOU</p>
             </div>
-            <div class="safaricom-logo">Safaricom</div>
+              <div class="safaricom-logo-container">
+                <img class="safaricom-logo-image" src="https://www.logo.wine/a/logo/Safaricom/Safaricom-Logo.wine.svg" alt="Safaricom Logo">
+              </div>
         </div>
     </div>
 </body>

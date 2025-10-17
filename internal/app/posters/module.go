@@ -55,7 +55,7 @@ func (m *Module) RegisterRoutes(r chi.Router) {
 		r.Delete("/posters/orders/{id}", m.Handler.DeleteOrder)
 		r.Post("/posters/templates", m.Handler.CreateTemplate)        // New
 		r.Get("/posters/templates/{id}", m.Handler.GetTemplateByID)   // New
-		r.Put("/posters/templates/{id}", m.Handler.UpdateTemplate)    // New
+		r.Patch("/posters/templates/{id}", m.Handler.UpdateTemplate)    // New
 		r.Delete("/posters/templates/{id}", m.Handler.DeleteTemplate) // New
 	})
 

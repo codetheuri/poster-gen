@@ -20,6 +20,7 @@ type TemplateResponse struct {
     Thumbnail string `json:"thumbnail"`
     IsActive  bool   `json:"is_active"`
     Layout    string `json:"layout"`
+    // RequiredFields []FieldConfig `json:"required_fields"`
 }
 
 // OrderResponse represents the response structure for an order

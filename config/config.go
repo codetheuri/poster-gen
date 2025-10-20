@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/codetheuri/poster-gen/pkg/errors"
@@ -28,7 +29,7 @@ type Config struct {
 	ServerPort        int
 	LOG_LEVEL         string
 	JWTSecret         string
-	AccessTokenTTL    time.Duration
+	AccessTokenTTL    time.Duration 
 	AppName           string
 	AppVersion        string
 	AppMode           string
@@ -36,13 +37,15 @@ type Config struct {
 	DBMaxIdleConns    int
 	DBMaxOpenConns    int
 	DBConnMaxLifetime int
+	CORSOrigins    []string
 
 	//mailer config
 	MailerHost     string
 	MailerPort     int
-	MailerUsername string
+	MailerUsername     string
 	MailerPassword string
 	MailerSender   string
+	
 }
 
 func LoadConfig() (*Config, error) {
@@ -55,10 +58,10 @@ func LoadConfig() (*Config, error) {
 		DBPass: os.Getenv("DB_PASS"),
 		DBHost: os.Getenv("DB_HOST"),
 		// DBPort: os.Getenv("DB_PORT"),
-		DBName:    os.Getenv("DB_NAME"),
-		DBDriver:  os.Getenv("DB_DRIVER"),
-		LOG_LEVEL: os.Getenv("LOG_LEVEL"),
-		JWTSecret: os.Getenv("JWT_SECRET"),
+		DBName:            os.Getenv("DB_NAME"),
+		DBDriver:          os.Getenv("DB_DRIVER"),
+		LOG_LEVEL:         os.Getenv("LOG_LEVEL"),
+		JWTSecret:         os.Getenv("JWT_SECRET"),
 		// AccessTokenTTL:    os.Getenv("ACCESS_TOKEN_TTL"),
 		AppName:           os.Getenv("APP_NAME"),
 		AppVersion:        os.Getenv("APP_VERSION"),
@@ -72,22 +75,25 @@ func LoadConfig() (*Config, error) {
 		MailerUsername: os.Getenv("MAIL_USERNAME"),
 		MailerPassword: os.Getenv("MAIL_PASSWORD"),
 		MailerSender:   os.Getenv("MAIL_SENDER"),
+
+		
+
 	}
-	JWTSecret := os.Getenv("JWT_SECRET")
+	JWTSecret :=   os.Getenv("JWT_SECRET")
 	if JWTSecret == "" {
 		return nil, errors.ConfigError("JWT_SECRET not set in .env", nil)
 	}
-	accessTokenTTLStr := os.Getenv("ACCESS_TOKEN_TTL")
-	if accessTokenTTLStr == "" {
-
-		accessTokenTTLStr = "24h"
-	}
-	// Parse the duration string (e.g., "3600s", "1h", "24h")
-	parsedTTL, err := time.ParseDuration(accessTokenTTLStr)
-	if err != nil {
-		return nil, errors.ConfigError(fmt.Sprintf("Invalid ACCESS_TOKEN_TTL value: %s, error: %v", accessTokenTTLStr, err), err)
-	}
-	cfg.AccessTokenTTL = parsedTTL
+	 accessTokenTTLStr := os.Getenv("ACCESS_TOKEN_TTL")
+    if accessTokenTTLStr == "" {
+        
+        accessTokenTTLStr = "24h" 
+    }
+    // Parse the duration string (e.g., "3600s", "1h", "24h")
+    parsedTTL, err := time.ParseDuration(accessTokenTTLStr)
+    if err != nil {
+        return nil, errors.ConfigError(fmt.Sprintf("Invalid ACCESS_TOKEN_TTL value: %s, error: %v", accessTokenTTLStr, err), err)
+    }
+    cfg.AccessTokenTTL = parsedTTL
 
 	if cfg.DBDriver == "" {
 		return nil, errors.ConfigError("DB_DRIVER not set in .env", nil)
@@ -114,9 +120,9 @@ func LoadConfig() (*Config, error) {
 		return nil, errors.ConfigError(fmt.Sprintf("Invalid SERVER_PORT value : %s", serverPortStr), err)
 	}
 	cfg.ServerPort = serverPort
-	//mail port
+      //mail port
 	mailerPortStr := os.Getenv("MAIL_PORT")
-	if mailerPortStr != "" {
+     if mailerPortStr != "" { 
 		mailPort, err := strconv.Atoi(mailerPortStr)
 		if err != nil {
 			return nil, errors.ConfigError(fmt.Sprintf("Invalid MAIL_PORT value: %s", mailerPortStr), err)
@@ -148,6 +154,12 @@ func LoadConfig() (*Config, error) {
 		}
 	}
 
+	corsOriginStr := os.Getenv("ALLOWED_ORIGINS")
+	if corsOriginStr != "" {
+		cfg.CORSOrigins = strings.Split(corsOriginStr, ",")
+	} else {
+		cfg.CORSOrigins = []string{}
+	}
 	//dsn based on DB driver
 	switch cfg.DBDriver {
 	case "mysql":
@@ -205,3 +217,5 @@ func ConnectDB() (*gorm.DB, error) {
 	}
 	return DB, nil
 }
+
+

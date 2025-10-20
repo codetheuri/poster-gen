@@ -188,7 +188,15 @@ func (s *posterSubService) htmlToPDF(ctx context.Context, htmlContent string, bu
 		}),
 		// 2. Wait until the page is loaded
 		chromedp.WaitVisible("body", chromedp.ByQuery),
-		chromedp.Sleep(2*time.Second), // Give some time for all resources to load
+		// chromedp.Sleep(2*time.Second), // Give some time for all resources to load
+		chromedp.Evaluate(`new Promise(resolve => {
+        if (document.readyState === 'complete') {
+            resolve();
+        } else {
+            window.addEventListener('load', resolve);
+        }
+    })`, nil),
+	    chromedp.Sleep(4 * time.Second), // Extra wait to ensure all resources are loaded)
 		chromedp.ActionFunc(func(ctx context.Context) error {
 
 			buf, _, err := page.PrintToPDF().
@@ -199,6 +207,7 @@ func (s *posterSubService) htmlToPDF(ctx context.Context, htmlContent string, bu
 				WithPrintBackground(true).
 				WithMarginTop(0).
 				WithMarginBottom(0).
+			
 				WithMarginLeft(0).
 				WithMarginRight(0).
 				Do(ctx)
@@ -241,7 +250,7 @@ func (s *posterSubService) GetPosterByID(ctx context.Context, id uint) (*dto.Pos
 	}
 
 	return &dto.PosterResponse{
-		ID: poster.ID,
+		ID:           poster.ID,
 		TemplateID:   poster.TemplateID,
 		BusinessName: poster.BusinessName,
 		PDFURL:       poster.PDFURL,

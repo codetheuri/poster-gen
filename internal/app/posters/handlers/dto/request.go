@@ -29,6 +29,7 @@ type TemplateInput struct {
 	Thumbnail      string          `json:"thumbnail" validate:"omitempty,url,max=255"`
 	IsActive       bool            `json:"is_active" validate:"omitempty"`
 	RequiredFields json.RawMessage `json:"required_fields" validate:"required"`
+	CustomizationData json.RawMessage `json:"customization_data" validate:"required"`
 	Layout         string          `json:"layout" validate:"required"` // JSON or XML layout definition
 }
 

@@ -6,10 +6,11 @@ import (
 	authRepositories "github.com/codetheuri/poster-gen/internal/app/auth/repositories"
 	authServices "github.com/codetheuri/poster-gen/internal/app/auth/services"
 	tokenPkg "github.com/codetheuri/poster-gen/pkg/auth/token"
+	"github.com/codetheuri/poster-gen/internal/app/routers"
 	"github.com/codetheuri/poster-gen/pkg/logger"
 	"github.com/codetheuri/poster-gen/pkg/middleware"
 	"github.com/codetheuri/poster-gen/pkg/validators"
-	"github.com/go-chi/chi"
+	
 	"gorm.io/gorm"
 )
 
@@ -39,17 +40,17 @@ func NewModule(db *gorm.DB, log logger.Logger, validator *validators.Validator, 
 }
 
 // RegisterRoutes registers the routes for the Auth module.
-func (m *Module) RegisterRoutes(r chi.Router) {
+func (m *Module) RegisterRoutes(r router.Router) {
 	m.log.Info("Registering Auth module routes...")
 
-	r.Group(func(r chi.Router) {
+	r.Group(func(r router.Router) {
 		r.Post("/auth/register", m.Handler.Register)
 		r.Post("/auth/login", m.Handler.Login)
 	})
 
 	// Authenticated routes (will need middleware later)
 
-	r.Group(func(r chi.Router) {
+	r.Group(func(r router.Router) {
 		r.Use(middleware.Authenticator(m.TokenService, m.log))
 		r.Get("/auth/profile/{id}", m.Handler.GetUserProfile)
 		r.Put("/auth/users/{id}/change-password", m.Handler.ChangePassword)

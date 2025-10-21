@@ -11,6 +11,7 @@ type PosterService struct {
 	PosterService         PosterSubService
 	PosterTemplateService PosterTemplateSubService
 	OrderService          OrderSubService
+	LogoService           LogoSubService
 
 }
 
@@ -24,6 +25,7 @@ func NewPosterService(
 	return &PosterService{
 		PosterService:         NewPosterSubService(repos.PosterRepo, validator, log, templateRepo, "./templates", "./posters"),
 		PosterTemplateService: NewPosterTemplateSubService(repos.PosterTemplateRepo, validator, log),
+        LogoService: NewLogoSubService(),
 		OrderService:          NewOrderSubService(repos.OrderRepo, validator, log),
 	}
 }

@@ -35,6 +35,7 @@ type PostersHandler interface {
 	GetTemplateByID(w http.ResponseWriter, r *http.Request) // New
 	UpdateTemplate(w http.ResponseWriter, r *http.Request)  // New
 	DeleteTemplate(w http.ResponseWriter, r *http.Request)  // New
+	GetLogos(w http.ResponseWriter, r *http.Request)
 }
 
 type postersHandler struct {
@@ -89,6 +90,22 @@ func (h *postersHandler) GeneratePoster(w http.ResponseWriter, r *http.Request) 
 	web.RespondData(w, http.StatusCreated, poster, "Poster generated successfully", web.WithSuccessType("toast"))
 }
 
+func (h *postersHandler) GetLogos(w http.ResponseWriter, r *http.Request) {
+	h.log.Info("Handler: Received GetLogos request")
+
+	ctx := r.Context()
+	// This assumes your composite service has a LogoService field.
+	logos, err := h.service.LogoService.GetLogos(ctx)
+	if err != nil {
+		h.log.Error("Handler: Failed to get logos from service", err)
+		h.handleAppError(w, err, "get logos")
+		return
+	}
+
+	h.log.Info("Handler: Logos retrieved successfully", "count", len(logos))
+	// web.RespondListData(w, http.StatusOK, logos, nil)
+	web.RespondData(w,http.StatusOK, logos, "Logos retrieved successfully", web.WithoutSuccess())
+}
 func (h *postersHandler) GetPosterByID(w http.ResponseWriter, r *http.Request) {
 	h.log.Info("Handler: Received GetPosterByID request")
 

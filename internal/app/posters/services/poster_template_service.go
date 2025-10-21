@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	stdErrors "errors"
 
 	dto "github.com/codetheuri/poster-gen/internal/app/posters/handlers/dto"
@@ -39,21 +40,20 @@ func NewPosterTemplateSubService(repo repositories.PosterTemplateSubRepository, 
 func (s *posterTemplateSubService) CreateTemplate(ctx context.Context, input *dto.TemplateInput) (*dto.TemplateResponse, error) {
 	s.log.Info("Creating poster template", "name", input.Name)
 
-	validationErrors := s.validator.Struct(input)
-	if validationErrors != nil {
+	if validationErrors := s.validator.Struct(input); validationErrors != nil {
 		s.log.Warn("Validation failed for template input", validationErrors)
 		return nil, errors.ValidationError("invalid template input", nil, validationErrors)
 	}
 
 	template := &models.PosterTemplate{
-		Name:           input.Name,
-		Type:           input.Type,
-		Price:          input.Price,
-		Thumbnail:      input.Thumbnail,
-		IsActive:       input.IsActive,
-		Layout:         input.Layout,
-		RequiredFields: datatypes.JSON(input.RequiredFields),
-		
+		Name:              input.Name,
+		Type:              input.Type,
+		Price:             input.Price,
+		Thumbnail:         input.Thumbnail,
+		IsActive:          input.IsActive,
+		Layout:            input.Layout,
+		RequiredFields:    datatypes.JSON(input.RequiredFields),
+		CustomizationData: datatypes.JSON(input.CustomizationData),
 	}
 
 	if err := s.repo.CreateTemplate(ctx, template); err != nil {
@@ -61,16 +61,17 @@ func (s *posterTemplateSubService) CreateTemplate(ctx context.Context, input *dt
 		return nil, errors.DatabaseError("failed to save template", err)
 	}
 
-	resp := &dto.TemplateResponse{
-		ID:        template.ID,
-		Name:      template.Name,
-		Type:      template.Type,
-		Price:     template.Price,
-		Thumbnail: template.Thumbnail,
-		IsActive:  template.IsActive,
-		Layout:    template.Layout,
-	}
-	return resp, nil
+	return &dto.TemplateResponse{
+		ID:                template.ID,
+		Name:              template.Name,
+		Type:              template.Type,
+		Price:             template.Price,
+		Thumbnail:         template.Thumbnail,
+		IsActive:          template.IsActive,
+		Layout:            template.Layout,
+		RequiredFields:    json.RawMessage(template.RequiredFields),
+		CustomizationData: json.RawMessage(template.CustomizationData),
+	}, nil
 }
 
 func (s *posterTemplateSubService) GetTemplateByID(ctx context.Context, id uint) (*dto.TemplateResponse, error) {
@@ -84,15 +85,17 @@ func (s *posterTemplateSubService) GetTemplateByID(ctx context.Context, id uint)
 		s.log.Error("Failed to get template", err, "id", id)
 		return nil, errors.DatabaseError("failed to retrieve template", err)
 	}
-	resp := &dto.TemplateResponse{
-		ID:        template.ID,
-		Name:      template.Name,
-		Type:      template.Type,
-		Price:     template.Price,
-		Thumbnail: template.Thumbnail,
-		IsActive:  template.IsActive,
-	}
-	return resp, nil
+	return &dto.TemplateResponse{
+		ID:                template.ID,
+		Name:              template.Name,
+		Type:              template.Type,
+		Price:             template.Price,
+		Thumbnail:         template.Thumbnail,
+		IsActive:          template.IsActive,
+		Layout:            template.Layout,
+		RequiredFields:    json.RawMessage(template.RequiredFields),
+		CustomizationData: json.RawMessage(template.CustomizationData),
+	}, nil
 }
 
 func (s *posterTemplateSubService) GetActiveTemplates(ctx context.Context) ([]*dto.TemplateResponse, error) {
@@ -105,12 +108,15 @@ func (s *posterTemplateSubService) GetActiveTemplates(ctx context.Context) ([]*d
 	resp := make([]*dto.TemplateResponse, len(templates))
 	for i, t := range templates {
 		resp[i] = &dto.TemplateResponse{
-			ID:        t.ID,
-			Name:      t.Name,
-			Type:      t.Type,
-			Price:     t.Price,
-			Thumbnail: t.Thumbnail,
-			IsActive:  t.IsActive,
+			ID:                t.ID,
+			Name:              t.Name,
+			Type:              t.Type,
+			Price:             t.Price,
+			Thumbnail:         t.Thumbnail,
+			IsActive:          t.IsActive,
+			Layout:            t.Layout,
+			RequiredFields:    json.RawMessage(t.RequiredFields),
+			CustomizationData: json.RawMessage(t.CustomizationData),
 		}
 	}
 	return resp, nil
@@ -122,34 +128,24 @@ func (s *posterTemplateSubService) UpdateTemplate(ctx context.Context, id uint, 
 	template, err := s.repo.GetTemplateByID(ctx, id)
 	if err != nil {
 		if stdErrors.Is(err, gorm.ErrRecordNotFound) {
-			s.log.Warn("Template not found", "id", id)
 			return errors.NotFoundError("template not found", err)
 		}
-		s.log.Error("Failed to get template for update", err, "id", id)
 		return errors.DatabaseError("failed to retrieve template", err)
 	}
 
-	// Apply only provided fields
 	if input.Name != "" {
 		template.Name = input.Name
 	}
-	if input.Type != "" {
-		template.Type = input.Type
+	if input.Layout != "" {
+		template.Layout = input.Layout
 	}
-	if input.Price != 0 {
-		template.Price = input.Price
-	}
-	// if input.Description != "" {
-	// 	template.Description = input.Description
-	// }
-	if input.Thumbnail != "" {
-		template.Thumbnail = input.Thumbnail
-	}
-
 	if len(input.RequiredFields) > 0 {
 		template.RequiredFields = datatypes.JSON(input.RequiredFields)
 	}
-	template.IsActive = input.IsActive // Always update IsActive if provided
+	if len(input.CustomizationData) > 0 {
+		template.CustomizationData = datatypes.JSON(input.CustomizationData)
+	}
+	template.IsActive = input.IsActive
 
 	if err := s.repo.UpdateTemplate(ctx, template); err != nil {
 		s.log.Error("Failed to update template", err, "id", id)
@@ -157,6 +153,7 @@ func (s *posterTemplateSubService) UpdateTemplate(ctx context.Context, id uint, 
 	}
 	return nil
 }
+
 func (s *posterTemplateSubService) DeleteTemplate(ctx context.Context, id uint) error {
 	s.log.Info("Deleting template", "id", id)
 	if err := s.repo.DeleteTemplate(ctx, id); err != nil {
@@ -165,3 +162,4 @@ func (s *posterTemplateSubService) DeleteTemplate(ctx context.Context, id uint) 
 	}
 	return nil
 }
+

@@ -27,4 +27,5 @@ type PosterTemplate struct {
 	// --- NEW FIELD ---
 	// This will define the dynamic form fields needed for this template.
 	RequiredFields datatypes.JSON `json:"required_fields" gorm:"not null"`
+	CustomizationData datatypes.JSON `json:"customization_data" gorm:"not null"`
 }

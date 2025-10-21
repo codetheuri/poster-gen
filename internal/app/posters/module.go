@@ -5,10 +5,10 @@ import (
 	postersRepositories "github.com/codetheuri/poster-gen/internal/app/posters/repositories"
 	postersServices "github.com/codetheuri/poster-gen/internal/app/posters/services"
 	tokenPkg "github.com/codetheuri/poster-gen/pkg/auth/token"
+	"github.com/codetheuri/poster-gen/internal/app/routers"
 	"github.com/codetheuri/poster-gen/pkg/logger"
 	"github.com/codetheuri/poster-gen/pkg/middleware"
 	"github.com/codetheuri/poster-gen/pkg/validators"
-	"github.com/go-chi/chi"
 	"gorm.io/gorm"
 )
 
@@ -33,31 +33,32 @@ func NewModule(db *gorm.DB, log logger.Logger, validator *validators.Validator, 
 }
 
 // RegisterRoutes registers the routes for the Posters module.
-func (m *Module) RegisterRoutes(r chi.Router) {
+func (m *Module) RegisterRoutes(r router.Router) {
 	m.log.Info("Registering Posters module routes...")
 
-	// Public routes (e.g., listing templates)
-	r.Group(func(r chi.Router) {
+	// Public routes
+	r.Group(func(r router.Router) {
 		r.Get("/posters/templates", m.Handler.GetActiveTemplates)
 		r.Post("/posters/generate", m.Handler.GeneratePoster)
-	})
-
-	// Authenticated routes (require JWT)
-	r.Group(func(r chi.Router) {
-		r.Use(middleware.Authenticator(m.TokenService, m.log))
-
 		r.Get("/posters/{id}", m.Handler.GetPosterByID)
 		r.Put("/posters/{id}", m.Handler.UpdatePoster)
 		r.Delete("/posters/{id}", m.Handler.DeletePoster)
+		r.Get("/logos", m.Handler.GetLogos)
+	})
+
+	// Authenticated routes
+	r.Group(func(r router.Router) {
+		r.Use(middleware.Authenticator(m.TokenService, m.log))
+
 		r.Post("/posters/orders", m.Handler.CreateOrder)
 		r.Post("/posters/orders/{id}/pay", m.Handler.ProcessPayment)
 		r.Get("/posters/orders/{id}", m.Handler.GetOrderByID)
 		r.Put("/posters/orders/{id}", m.Handler.UpdateOrder)
 		r.Delete("/posters/orders/{id}", m.Handler.DeleteOrder)
-		r.Post("/posters/templates", m.Handler.CreateTemplate)        // New
-		r.Get("/posters/templates/{id}", m.Handler.GetTemplateByID)   // New
-		r.Patch("/posters/templates/{id}", m.Handler.UpdateTemplate)  // New
-		r.Delete("/posters/templates/{id}", m.Handler.DeleteTemplate) // New
+		r.Post("/posters/templates", m.Handler.CreateTemplate)
+		r.Get("/posters/templates/{id}", m.Handler.GetTemplateByID)
+		r.Patch("/posters/templates/{id}", m.Handler.UpdateTemplate)
+		r.Delete("/posters/templates/{id}", m.Handler.DeleteTemplate)
 	})
 
 	m.log.Info("Posters module routes registered.")

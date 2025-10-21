@@ -8,7 +8,6 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/chromedp/cdproto/page"
@@ -20,6 +19,7 @@ import (
 	"github.com/codetheuri/poster-gen/pkg/logger"
 	"github.com/codetheuri/poster-gen/pkg/validators"
 	"github.com/skip2/go-qrcode"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -65,64 +65,98 @@ func NewPosterSubService(
 
 // GeneratePoster - Main function that orchestrates the entire process
 func (s *posterSubService) GeneratePoster(ctx context.Context, templateID uint, input *dto.PosterInput) (*dto.PosterResponse, error) {
-	s.log.Info("Generating poster", "template_id", templateID)
+	s.log.Info("Generating poster with dynamic template", "template_id", templateID)
 
-	// Validate input
-	validationErrors := s.validator.Struct(input)
-	if validationErrors != nil {
-		s.log.Warn("Validation failed for poster input", validationErrors)
+	if validationErrors := s.validator.Struct(input); validationErrors != nil {
 		return nil, errors.ValidationError("invalid poster input", nil, validationErrors)
 	}
 
-	// Fetch template
 	templateRecord, err := s.templateRepo.GetTemplateByID(ctx, templateID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			s.log.Warn("Template not found", "template_id", templateID)
 			return nil, errors.NotFoundError("template not found", err)
 		}
-		s.log.Error("Failed to get template", err, "template_id", templateID)
 		return nil, errors.DatabaseError("failed to retrieve template", err)
 	}
 
-	// Prepare template data for HTML rendering
-	templateData := map[string]interface{}{
-		"business_name": input.BusinessName,
-	}
-	for key, value := range input.Data {
-		templateData[key] = value
+	// --- THIS IS THE NEW CORE LOGIC ---
+	// Create a single map to hold all data for the template.
+	templateData := make(map[string]interface{})
 
-		// Smartly add split versions for number boxing
-		if key == "agent_number" || key == "store_number" || key == "till_number" {
-			if strValue, ok := value.(string); ok {
-				templateData[key+"Split"] = strings.Split(strValue, "")
+	// 1. Unmarshal the customization data from the template into our map.
+	// var customizationData map[string]interface{}
+	// if err := json.Unmarshal(templateRecord.CustomizationData, &customizationData); err != nil {
+	// 	s.log.Error("Failed to unmarshal customization data", err)
+	// 	return nil, errors.InternalServerError("invalid template customization data", err)
+	// }
+	// for key, value := range customizationData {
+	// 	templateData[key] = value
+	// }
+
+	// // 2. Add the user's dynamic input data into the same map.
+	// for key, value := range input.Data {
+	// 	templateData[key] = value
+	// 	// Smartly add split versions for number boxing
+	// 	if strings.HasSuffix(key, "_number") {
+	// 		if strValue, ok := value.(string); ok {
+	// 			templateData[key+"Split"] = strings.Split(strValue, "")
+	// 		}
+	// 	}
+	// }
+	var baseCustomizationData map[string]interface{}
+	if err := json.Unmarshal(templateRecord.CustomizationData, &baseCustomizationData); err != nil {
+		// This can fail if the DB data is a string-inside-a-string. Let's handle that.
+		var strData string
+		if err2 := json.Unmarshal(templateRecord.CustomizationData, &strData); err2 == nil {
+			// If it's a string, unmarshal that string's content.
+			if err3 := json.Unmarshal([]byte(strData), &baseCustomizationData); err3 != nil {
+				s.log.Error("Failed to unmarshal nested customization data string", err3)
+				return nil, errors.InternalServerError("invalid template customization data format", err3)
 			}
+		} else {
+			s.log.Error("Failed to unmarshal customization data", err)
+			return nil, errors.InternalServerError("invalid template customization data", err)
 		}
 	}
+
+	// 2. Start building our final data map with the base styles from the template.
+	for key, value := range baseCustomizationData {
+		templateData[key] = value
+	}
+
+	// 3. MERGE: Apply the user's live changes from the frontend ON TOP of the base styles.
+	// This allows the user's choices (e.g., a new color) to override the defaults.
+	// for key, value := range input.CustomizationData {
+	// 	templateData[key] = value
+	// }
+
+	// 3. Add any other global data, like the business name.
+	templateData["business_name"] = input.BusinessName
+	// --- END OF NEW LOGIC ---
 
 	htmlContent, err := s.renderHTMLTemplate(templateData, templateRecord.Layout)
 	if err != nil {
 		s.log.Error("Failed to render HTML template", err)
 		return nil, errors.InternalServerError("failed to render template", err)
 	}
-	// Generate PDF using HTML template
+
 	pdfPath, err := s.htmlToPDF(ctx, htmlContent, input.BusinessName)
 	if err != nil {
 		s.log.Error("Failed to generate PDF from HTML", err)
 		return nil, errors.InternalServerError("failed to generate PDF", err)
 	}
+
 	dynamicDataJSON, err := json.Marshal(input.Data)
 	if err != nil {
-		s.log.Error("Failed to marshal dynamic data to JSON", err)
 		return nil, errors.InternalServerError("failed to marshal dynamic data", err)
 	}
-	// Create poster record
+
 	poster := &models.Poster{
 		UserID:       nil,
 		OrderID:      nil,
 		TemplateID:   templateID,
 		BusinessName: input.BusinessName,
-		DynamicData:  dynamicDataJSON, // <-- Store the entire dynamic data map as JSON
+		DynamicData:  datatypes.JSON(dynamicDataJSON),
 		PDFURL:       pdfPath,
 		Status:       "completed",
 	}
@@ -132,14 +166,13 @@ func (s *posterSubService) GeneratePoster(ctx context.Context, templateID uint, 
 		return nil, errors.DatabaseError("failed to save poster", err)
 	}
 
-	resp := &dto.PosterResponse{
+	return &dto.PosterResponse{
 		ID:           poster.ID,
 		TemplateID:   poster.TemplateID,
 		BusinessName: poster.BusinessName,
 		PDFURL:       poster.PDFURL,
 		Status:       poster.Status,
-	}
-	return resp, nil
+	}, nil
 }
 
 // renderHTMLTemplate - Renders HTML template with data
@@ -196,7 +229,7 @@ func (s *posterSubService) htmlToPDF(ctx context.Context, htmlContent string, bu
             window.addEventListener('load', resolve);
         }
     })`, nil),
-	    chromedp.Sleep(4 * time.Second), // Extra wait to ensure all resources are loaded)
+		chromedp.Sleep(4*time.Second), // Extra wait to ensure all resources are loaded)
 		chromedp.ActionFunc(func(ctx context.Context) error {
 
 			buf, _, err := page.PrintToPDF().
@@ -207,7 +240,6 @@ func (s *posterSubService) htmlToPDF(ctx context.Context, htmlContent string, bu
 				WithPrintBackground(true).
 				WithMarginTop(0).
 				WithMarginBottom(0).
-			
 				WithMarginLeft(0).
 				WithMarginRight(0).
 				Do(ctx)

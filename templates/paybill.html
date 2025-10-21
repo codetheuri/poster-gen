@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Paybill Poster</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family={{.font_family_name}}:wght@500;700;800&display=swap');
+
+        :root {
+            /* --- FIX: Removed the invalid '|' fallback syntax --- */
+            --primary-color: {{.primary_color}};
+            --text-color-on-primary: {{.text_color_on_primary}};
+            --secondary-text-color: {{.secondary_text_color}};
+        }
+
+        @page { size: A4; margin: 0; }
+        html, body {
+            width: 210mm;
+            height: 297mm;
+            margin: 0;
+            padding: 0;
+            font-family: '{{.font_family_name}}', Arial, sans-serif;
+            background-color: #FFFFFF;
+        }
+        * { box-sizing: border-box; }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #FFFFFF;
+            height: 35%; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 4px solid #f0f0f0;
+            flex-shrink: 0;
+        }
+        
+        .header-logo {
+            max-height: 70px;
+            max-width: 180px;
+            width: auto;
+        }
+        
+        .content {
+            background-color: var(--primary-color);
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            color: var(--text-color-on-primary);
+        }
+
+        .business-name {
+            /* --- FIX: Removed the invalid '|' fallback syntax --- */
+            font-size: {{.font_size_large}};
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+            width: 80%;
+        }
+
+        .number-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .number-section-label {
+            /* --- FIX: Removed the invalid '|' fallback syntax --- */
+            font-size: {{.font_size_medium}};
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 15px;
+        }
+        .number-boxes { display: flex; justify-content: center; gap: 10px; }
+        .digit-box {
+            background-color: white;
+            border: 2px solid #333;
+            width: 70px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* --- FIX: Removed the invalid '|' fallback syntax --- */
+            font-size: {{.font_size_xlarge}};
+            font-weight: 800;
+            color: var(--secondary-text-color);
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+             {{if .header_logo_svg}}
+                <!-- The template correctly renders raw SVG code -->
+                {{.header_logo_svg}}
+             {{end}}
+        </div>
+        
+        <div class="content">
+            <div class="business-name">{{.business_name}}</div>
+            <div class="number-section">
+                <div class="number-section-label">Paybill Number</div>
+                <div class="number-boxes">
+                    {{range .paybill_numberSplit}}
+                        <div class="digit-box">{{.}}</div>
+                    {{end}}
+                </div>
+            </div>
+            
+            <div class="number-section">
+                <div class="number-section-label">Account Number</div>
+                <div class="number-boxes">
+                    {{range .account_numberSplit}}
+                        <div class="digit-box">{{.}}</div>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

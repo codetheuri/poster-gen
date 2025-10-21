@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -24,6 +25,29 @@ import (
 	// "github.com/codetheuri/poster-gen/pkg/validators"
 )
 
+type noListFileSystem struct {
+	fs http.FileSystem
+}
+
+// Open checks if the requested path is a directory. If so, it returns a "not found" error.
+func (nlfs noListFileSystem) Open(path string) (http.File, error) {
+	f, err := nlfs.fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if s.IsDir() {
+		// We return a "not found" error instead of serving the directory.
+		return nil, os.ErrNotExist
+	}
+
+	return f, nil
+}
+
 // initiliazes and start the application
 func Run(cfg *config.Config, log logger.Logger) error {
 	//db
@@ -32,9 +56,8 @@ func Run(cfg *config.Config, log logger.Logger) error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	//initialize the router
 
-	//initilialize app components
+
 	appValidator := validators.NewValidator()
 
 	//application modules
@@ -46,11 +69,22 @@ func Run(cfg *config.Config, log logger.Logger) error {
 
 	//register routes from all modules
 	mainRouter := router.NewRouter(log)
-	for _, module := range appModules {
-		module.RegisterRoutes(mainRouter)
-	}
+	workDir, _ := os.Getwd()
+	filesDir := http.Dir(filepath.Join(workDir, "posters"))
+	secureFileServer := http.FileServer(noListFileSystem{fs: filesDir})
+	mainRouter.Get("/posters/*", func(w http.ResponseWriter, r *http.Request) {
+		fs := http.StripPrefix("/posters", secureFileServer)
+		fs.ServeHTTP(w, r)
+	})
+	mainRouter.Route("/api", func(r router.Router) {
+		// Register routes from all modules onto this sub-router.
+		for _, module := range appModules {
+			module.RegisterRoutes(r)
+		}
+	})
 
-	//middleware
+
+	//middlewares
 	var handler http.Handler = mainRouter
 	handler = middleware.CORS(cfg.CORSOrigins, log)(handler)
 	handler = middleware.SecurityHeaders(handler)

@@ -19,6 +19,7 @@ type PosterInput struct {
 	BusinessName string `json:"business_name" validate:"required"`
 	// The 'data' field will hold all dynamic key-value pairs from the form.
 	Data map[string]interface{} `json:"data" validate:"required"`
+	CustomizationData map[string]interface{} `json:"customization_data" validate:"required"`
 }
 
 // TemplateInput matches the service's TemplateInput for request validation

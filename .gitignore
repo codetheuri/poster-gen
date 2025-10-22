@@ -14,5 +14,6 @@ vendor/
 .idea/
 .vscode/
 
-posters/
+/posters/
+
 debug_screenshot.png

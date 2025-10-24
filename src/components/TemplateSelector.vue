@@ -10,7 +10,7 @@
       </div>
     </div>
     <div v-else class="text-center text-slate-500 p-4 border-2 border-dashed rounded-lg">
-      Loading templates...
+      no templates available
     </div>
   </div>
 </template>

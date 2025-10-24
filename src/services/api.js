@@ -57,9 +57,9 @@ export async function fetchLogos() {
   const payload = await handleResponse(response);
   const logos = payload.datapayload?.data;
   
-  if (!Array.isArray(logos)) {
-      throw new Error("Logo data from the API is not in the expected format.");
-  }
+  // if (!Array.isArray(logos)) {
+  //     throw new Error("Logo data from the API is not in the expected format.");
+  // }
   return logos;
 }
 

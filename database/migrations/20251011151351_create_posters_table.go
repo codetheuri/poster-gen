@@ -31,13 +31,19 @@ package migrations
 		// if err := tx.AutoMigrate(&NewModel{}); err != nil {
 		// 	return err
 		// }
-		if err := tx.AutoMigrate(&models.Poster{}); err != nil {
+		if err := tx.AutoMigrate(&models.Asset{}); err != nil {
 			return err
 		}
-		if err := tx.AutoMigrate(&models.Order{}); err != nil {
+		// if err := tx.AutoMigrate(&models.Order{}); err != nil {
+		// 	return err
+		// }
+		if err := tx.AutoMigrate(&models.Layout{}); err != nil {
 			return err
 		}
 		if err := tx.AutoMigrate(&models.PosterTemplate{}); err != nil {
+			return err
+		}
+		if err := tx.AutoMigrate(&models.Poster{}); err != nil {
 			return err
 		}
 		log.Printf("Successfully applied Up migration: %s", m.Name())
@@ -59,10 +65,16 @@ package migrations
 		if err := tx.Migrator().DropTable("posters"); err != nil {
 			return err
 		}
-		if err := tx.Migrator().DropTable("orders"); err != nil {
+		// if err := tx.Migrator().DropTable("orders"); err != nil {
+		// 	return err
+		// }
+		if err := tx.Migrator().DropTable("poster_templates"); err != nil {
 			return err
 		}
-		if err := tx.Migrator().DropTable("poster_templates"); err != nil {
+		if err := tx.Migrator().DropTable("layouts"); err != nil {
+			return err
+		}
+		if err := tx.Migrator().DropTable("assets"); err != nil {
 			return err
 		}
 		log.Printf("Successfully applied Down migration: %s", m.Name())

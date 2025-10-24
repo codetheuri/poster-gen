@@ -8,8 +8,11 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv" // Added for robust asset ID parsing
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
@@ -22,47 +25,55 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
-
-// ... (Interface and struct definitions remain the same) ...
+type RequiredFieldConfig struct {
+	Name         string `json:"name"`
+	Label        string `json:"label"`
+	Type         string `json:"type"`
+	Pattern      string `json:"pattern,omitempty"`
+	MaxLength    int    `json:"maxLength,omitempty"`
+	PatternTitle string `json:"patternTitle,omitempty"`
+}
 type PosterSubService interface {
 	GeneratePoster(ctx context.Context, templateID uint, input *dto.PosterInput) (*dto.PosterResponse, error)
 	GetPosterByID(ctx context.Context, id uint) (*dto.PosterResponse, error)
-	UpdatePoster(ctx context.Context, id uint, input *dto.PosterInput) error
-	DeletePoster(ctx context.Context, id uint) error
 }
 
 type posterSubService struct {
 	repo         repositories.PosterSubRepository
+	templateRepo repositories.PosterTemplateRepository
+	layoutRepo   repositories.LayoutRepository
+	assetRepo    repositories.AssetRepository
 	validator    *validators.Validator
 	log          logger.Logger
-	templateRepo repositories.PosterTemplateSubRepository
 	templatesDir string
 	outputDir    string
 }
 
 func NewPosterSubService(
 	repo repositories.PosterSubRepository,
+	templateRepo repositories.PosterTemplateRepository,
+	layoutRepo repositories.LayoutRepository,
+	assetRepo repositories.AssetRepository,
 	validator *validators.Validator,
 	log logger.Logger,
-	templateRepo repositories.PosterTemplateSubRepository,
 	templatesDir string,
 	outputDir string,
 ) PosterSubService {
-	// ... (constructor is fine) ...
 	os.MkdirAll(templatesDir, 0755)
 	os.MkdirAll(outputDir, 0755)
 
 	return &posterSubService{
 		repo:         repo,
+		templateRepo: templateRepo,
+		layoutRepo:   layoutRepo,
+		assetRepo:    assetRepo,
 		validator:    validator,
 		log:          log,
-		templateRepo: templateRepo,
 		templatesDir: templatesDir,
 		outputDir:    outputDir,
 	}
 }
 
-// GeneratePoster - Reverted loop to standard form.
 func (s *posterSubService) GeneratePoster(ctx context.Context, templateID uint, input *dto.PosterInput) (*dto.PosterResponse, error) {
 	s.log.Info("Generating poster with dynamic template", "template_id", templateID)
 
@@ -74,103 +85,156 @@ func (s *posterSubService) GeneratePoster(ctx context.Context, templateID uint, 
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.NotFoundError("template not found", err)
 		}
+		s.log.Error("Failed to retrieve template", err, "template_id", templateID)
 		return nil, errors.DatabaseError("failed to retrieve template", err)
 	}
-	templateData := make(map[string]interface{})
-	var baseCustomizationData map[string]interface{}
-	if len(templateRecord.CustomizationData) > 0 && string(templateRecord.CustomizationData) != "null" {
-		if err := json.Unmarshal(templateRecord.CustomizationData, &baseCustomizationData); err != nil {
+	if templateRecord.Layout.FilePath == "" {
+		s.log.Error("Layout information missing or invalid for template", nil, "template_id", templateID, "layout_id", templateRecord.LayoutID)
+		return nil, errors.InternalServerError("template configuration incomplete: layout file path missing", nil)
+	}
+	var requiredFields []RequiredFieldConfig
+	if err := json.Unmarshal(templateRecord.RequiredFields, &requiredFields); err != nil {
+		s.log.Error("Failed to parse required_fields JSON from template", err, "template_id", templateID)
+		return nil, errors.InternalServerError("template configuration error: invalid required fields", err)
+	}
+
+	validationErrors := make(map[string]string)
+	for _, fieldConfig := range requiredFields {
+		fieldName := fieldConfig.Name
+		userValue, exists := input.Data[fieldName]
+
+		if !exists || userValue == nil || fmt.Sprintf("%v", userValue) == "" {
+			// Basic required check (can be enhanced if templates define optional fields)
+			validationErrors[fieldName] = fmt.Sprintf("%s is required.", fieldConfig.Label)
+			continue // Skip further checks if missing
+		}
+
+		// Ensure value is treated as a string for validation checks
+		userValueStr := fmt.Sprintf("%v", userValue)
+
+		// MaxLength Check (using rune count for UTF-8 safety)
+		if fieldConfig.MaxLength > 0 && utf8.RuneCountInString(userValueStr) > fieldConfig.MaxLength {
+			validationErrors[fieldName] = fmt.Sprintf("%s cannot exceed %d characters.", fieldConfig.Label, fieldConfig.MaxLength)
+		}
+
+		// Pattern Check
+		if fieldConfig.Pattern != "" {
+			matched, _ := regexp.MatchString(fieldConfig.Pattern, userValueStr)
+			if !matched {
+				errorMsg := "Invalid format."
+				if fieldConfig.PatternTitle != "" {
+					errorMsg = fieldConfig.PatternTitle
+				}
+				validationErrors[fieldName] = fmt.Sprintf("%s: %s", fieldConfig.Label, errorMsg)
+			}
+		}
+	}
+
+	// If any validation errors occurred, return them immediately
+	if len(validationErrors) > 0 {
+		s.log.Warn("Backend validation failed for poster input data", validationErrors)
+		// Convert map[string]string to map[string]interface{} for ValidationError
+		errorDetails := make(map[string]interface{}, len(validationErrors))
+		for k, v := range validationErrors {
+			errorDetails[k] = v
+		}
+		return nil, errors.ValidationError("invalid input data provided", nil, errorDetails)
+	}
+	finalTemplateData := make(map[string]interface{})
+
+	var baseCustomization map[string]interface{}
+	if len(templateRecord.DefaultCustomization) > 0 && string(templateRecord.DefaultCustomization) != "null" {
+		if err := json.Unmarshal(templateRecord.DefaultCustomization, &baseCustomization); err != nil {
 			var strData string
-			if err2 := json.Unmarshal(templateRecord.CustomizationData, &strData); err2 == nil && strData != "" {
-
-				if err3 := json.Unmarshal([]byte(strData), &baseCustomizationData); err3 != nil {
-					s.log.Error("Failed to unmarshal nested customization data string", err3, "raw_data", strData)
-					return nil, errors.InternalServerError("invalid template customization data format", err3)
+			if err2 := json.Unmarshal(templateRecord.DefaultCustomization, &strData); err2 == nil && strData != "" {
+				if err3 := json.Unmarshal([]byte(strData), &baseCustomization); err3 != nil {
+					s.log.Error("Failed to unmarshal nested base customization data", err3, "raw_data", strData)
+					return nil, errors.InternalServerError("invalid template base customization format", err3)
 				}
 			} else {
-				s.log.Error("Failed to unmarshal base customization data", err, "raw_data", string(templateRecord.CustomizationData))
-				return nil, errors.InternalServerError("invalid template customization data", err)
+				s.log.Error("Failed to unmarshal base customization data", err, "raw_data", string(templateRecord.DefaultCustomization))
+				return nil, errors.InternalServerError("invalid template base customization", err)
 			}
 		}
 	}
-
-	// 2. Add base customization data to templateData.
-
-	for key, value := range baseCustomizationData {
-		if key == "header_logo_svg" {
-			if svgStr, ok := value.(string); ok {
-				templateData[key] = template.HTML(svgStr)
-			} else {
-				templateData[key] = value
-			}
-		} else {
-			templateData[key] = value
-
-		}
-		// key is string here
+	for key, value := range baseCustomization {
+		finalTemplateData[key] = value
 	}
 
-	// 3. MERGE: Add/Override with user's specific customization choices from input.
 	if input.CustomizationData != nil {
-		for k, v := range input.CustomizationData {
-			if k == "header_logo_svg" {
-				if svgStr, ok := v.(string); ok {
-					templateData[k] = template.HTML(svgStr)
-					
-				}else{
-					templateData[k] = v
-				}
-			} else {
-				templateData[k] = v
-			}
+		for key, value := range input.CustomizationData {
+			finalTemplateData[key] = value
 		}
-
 	}
 
-	// 4. Add user's dynamic form input data.
+	var logoSVG template.HTML = ""
+	if logoAssetIDVal, ok := finalTemplateData["header_logo_asset_id"]; ok {
+		var logoAssetID uint = 0
+		if idFloat, ok := logoAssetIDVal.(float64); ok && idFloat > 0 {
+			logoAssetID = uint(idFloat)
+		} else if idStr, ok := logoAssetIDVal.(string); ok {
+			idUint64, _ := strconv.ParseUint(idStr, 10, 64)
+			logoAssetID = uint(idUint64)
+		}
+
+		if logoAssetID > 0 {
+			asset, err := s.assetRepo.GetAssetByID(ctx, logoAssetID)
+			if err == nil && asset != nil && asset.Type == "logo" {
+				logoSVG = template.HTML(asset.Data)
+				if _, userSetColor := input.CustomizationData["primary_color"]; !userSetColor && asset.DefaultColor != "" {
+					finalTemplateData["primary_color"] = asset.DefaultColor
+				}
+			} else if err != nil && err != gorm.ErrRecordNotFound {
+				s.log.Warn("Failed to fetch logo asset", err, "asset_id", logoAssetID)
+			} else {
+				s.log.Warn("Logo asset not found or not of type 'logo'", nil, "asset_id", logoAssetID)
+			}
+		}
+	}
+	finalTemplateData["header_logo_svg"] = logoSVG
 
 	if input.Data != nil {
 		for key, value := range input.Data {
-			templateData[key] = value
+			finalTemplateData[key] = value
 			if strings.HasSuffix(key, "_number") {
 				if strValue, ok := value.(string); ok && strValue != "" {
-					templateData[key+"Split"] = strings.Split(strValue, "")
+					finalTemplateData[key+"Split"] = strings.Split(strValue, "")
 				} else {
-					templateData[key+"Split"] = []string{}
+					finalTemplateData[key+"Split"] = []string{}
 				}
 			}
 		}
 	}
 
-	// 5. Add business name.
-	templateData["business_name"] = input.BusinessName
+	finalTemplateData["business_name"] = input.BusinessName
 
-	htmlContent, err := s.renderHTMLTemplate(templateData, templateRecord.Layout)
+	htmlContent, err := s.renderHTMLTemplate(finalTemplateData, templateRecord.Layout.FilePath)
 	if err != nil {
-		s.log.Error("Failed to render HTML template", err)
 		return nil, errors.InternalServerError("failed to render template", err)
 	}
 
-	// pdfPath, err := s.htmlToPDF(ctx, htmlContent, input.BusinessName)
-	pdfPath, err := s.renderToImage(ctx, htmlContent, input.BusinessName)
+	pdfPath, err := s.renderToPDF(ctx, htmlContent, input.BusinessName, make(map[string]interface{}))
 	if err != nil {
-		s.log.Error("Failed to generate PDF from HTML", err)
 		return nil, errors.InternalServerError("failed to generate PDF", err)
 	}
 
-	dynamicDataJSON, err := json.Marshal(input.Data)
+	userInputDataJSON, err := json.Marshal(input.Data)
 	if err != nil {
-		return nil, errors.InternalServerError("failed to marshal dynamic data", err)
+		return nil, errors.InternalServerError("failed to marshal user input data", err)
+	}
+	finalCustomizationJSON, err := json.Marshal(finalTemplateData)
+	if err != nil {
+		s.log.Error("Failed to marshal final customization data", err, "data", finalTemplateData)
+		return nil, errors.InternalServerError("failed to marshal final customization data", err)
 	}
 
 	poster := &models.Poster{
-		UserID:       nil,
-		OrderID:      nil,
-		TemplateID:   templateID,
-		BusinessName: input.BusinessName,
-		DynamicData:  datatypes.JSON(dynamicDataJSON),
-		PDFURL:       pdfPath,
-		Status:       "completed",
+		PosterTemplateID:   templateID,
+		BusinessName:       input.BusinessName,
+		UserInputData:      datatypes.JSON(userInputDataJSON),
+		FinalCustomization: datatypes.JSON(finalCustomizationJSON),
+		PDFURL:             pdfPath,
+		Status:             "completed",
 	}
 
 	if err := s.repo.CreatePoster(ctx, poster); err != nil {
@@ -180,35 +244,41 @@ func (s *posterSubService) GeneratePoster(ctx context.Context, templateID uint, 
 
 	return &dto.PosterResponse{
 		ID:           poster.ID,
-		TemplateID:   poster.TemplateID,
+		TemplateID:   poster.PosterTemplateID,
 		BusinessName: poster.BusinessName,
 		PDFURL:       poster.PDFURL,
 		Status:       poster.Status,
 	}, nil
 }
 
-func (s *posterSubService) renderHTMLTemplate(data map[string]interface{}, templateName string) (string, error) {
-	templatePath := filepath.Join(s.templatesDir, templateName)
+func (s *posterSubService) renderHTMLTemplate(data map[string]interface{}, layoutFilePath string) (string, error) {
+	templatePath := filepath.Join(s.templatesDir, layoutFilePath)
 	templateBytes, err := os.ReadFile(templatePath)
 	if err != nil {
+		s.log.Error("Failed to read template file", err, "path", templatePath)
 		return "", fmt.Errorf("failed to read template file %s: %w", templatePath, err)
 	}
-	tmpl, err := template.New("poster").Parse(string(templateBytes))
+	tmpl, err := template.New(filepath.Base(layoutFilePath)).Funcs(template.FuncMap{
+		"safeHTML": func(s string) template.HTML { return template.HTML(s) },
+	}).Parse(string(templateBytes))
 	if err != nil {
-		return "", fmt.Errorf("failed to parse template: %w", err)
+		s.log.Error("Failed to parse HTML template", err, "path", templatePath)
+		return "", fmt.Errorf("failed to parse template %s: %w", layoutFilePath, err)
 	}
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("failed to execute template: %w", err)
+		s.log.Error("Failed to execute HTML template", err, "path", templatePath)
+		return "", fmt.Errorf("failed to execute template %s: %w", layoutFilePath, err)
 	}
 	return buf.String(), nil
 }
 
-func (s *posterSubService) htmlToPDF(ctx context.Context, htmlContent string, businessName string) (string, error) {
+func (s *posterSubService) renderToPDF(ctx context.Context, htmlContent string, businessName string, templateData map[string]interface{}) (string, error) {
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
 	var pdfBuffer []byte
-	pdfPath := filepath.Join(s.outputDir, fmt.Sprintf("%s_%d.pdf", businessName, time.Now().Unix()))
+	safeBusinessName := strings.ReplaceAll(businessName, " ", "_")
+	pdfPath := filepath.Join(s.outputDir, fmt.Sprintf("%s_%d.pdf", safeBusinessName, time.Now().Unix()))
 	err := chromedp.Run(ctx,
 		chromedp.Navigate("about:blank"),
 		chromedp.ActionFunc(func(ctx context.Context) error {
@@ -219,21 +289,16 @@ func (s *posterSubService) htmlToPDF(ctx context.Context, htmlContent string, bu
 			return page.SetDocumentContent(frameTree.Frame.ID, htmlContent).Do(ctx)
 		}),
 		chromedp.Evaluate(`new Promise(resolve => {
-			if (document.readyState === 'complete') { resolve(); }
-			else { window.addEventListener('load', resolve); }
-		})`, nil),
+            if (document.readyState === 'complete') { resolve(); }
+            else { window.addEventListener('load', resolve); }
+        })`, nil),
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			buf, _, err := page.PrintToPDF().
-			    WithLandscape(true).
+			printParams := page.PrintToPDF().
 				WithPreferCSSPageSize(true).
 				WithPrintBackground(true).
-			WithPaperWidth(11.7).
-				WithPaperHeight(8.27).
-				WithMarginTop(0).
-				WithMarginBottom(0).
-				WithMarginLeft(0).
-				WithMarginRight(0).
-				Do(ctx)
+				WithMarginTop(0).WithMarginBottom(0).WithMarginLeft(0).WithMarginRight(0)
+
+			buf, _, err := printParams.Do(ctx)
 			if err != nil {
 				return err
 			}
@@ -242,63 +307,34 @@ func (s *posterSubService) htmlToPDF(ctx context.Context, htmlContent string, bu
 		}),
 	)
 	if err != nil {
+		s.log.Error("Chromedp PDF generation failed", err)
 		return "", fmt.Errorf("chromedp failed: %w", err)
 	}
 	if err := os.WriteFile(pdfPath, pdfBuffer, 0644); err != nil {
+		s.log.Error("Failed to write PDF file", err, "path", pdfPath)
 		return "", fmt.Errorf("failed to write PDF file: %w", err)
 	}
+	s.log.Info("PDF generated successfully using CSS @page", "path", pdfPath)
 	return pdfPath, nil
 }
 
-func (s *posterSubService) renderToImage(ctx context.Context, htmlContent string, businessName string) (string, error) {
-	ctx, cancel := chromedp.NewContext(context.Background())
-	defer cancel()
-	var imageBuffer []byte //
-	imagePath := filepath.Join(s.outputDir, fmt.Sprintf("%s_%d.jpeg", businessName, time.Now().Unix()))
-
-	err := chromedp.Run(ctx,
-		chromedp.Navigate("about:blank"),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			frameTree, err := page.GetFrameTree().Do(ctx)
-			if err != nil {
-				return err
-			}
-			return page.SetDocumentContent(frameTree.Frame.ID, htmlContent).Do(ctx)
-		}),
-		chromedp.Evaluate(`new Promise(resolve => {
-			if (document.readyState === 'complete') { resolve(); }
-			else { window.addEventListener('load', resolve); }
-		})`, nil),
-
-		// Capture the entire page as a screenshot (defaults to PNG)
-		chromedp.FullScreenshot(&imageBuffer, 90), // 90 is image quality (for JPEG, not PNG)
-	)
-	if err != nil {
-		return "", fmt.Errorf("chromedp failed to capture screenshot: %w", err)
-	}
-	if err := os.WriteFile(imagePath, imageBuffer, 0644); err != nil {
-		return "", fmt.Errorf("failed to write image file: %w", err)
-	}
-	return imagePath, nil
-}
-
+// GetPosterByID uses the correct PosterRepository interface.
 func (s *posterSubService) GetPosterByID(ctx context.Context, id uint) (*dto.PosterResponse, error) {
-	poster, err := s.repo.GetPosterByID(ctx, id)
+	s.log.Info("Getting poster by ID", "poster_id", id)
+	poster, err := s.repo.GetPosterByID(ctx, id) // Use s.repo (PosterRepository)
 	if err != nil {
-		return nil, err // Assuming repo handles not found error appropriately
+		if err == gorm.ErrRecordNotFound {
+			s.log.Warn("Poster not found", "poster_id", id)
+			return nil, errors.NotFoundError("poster not found", err)
+		}
+		s.log.Error("Failed to get poster by ID", err, "poster_id", id)
+		return nil, errors.DatabaseError("failed to retrieve poster", err)
 	}
 	return &dto.PosterResponse{
 		ID:           poster.ID,
-		TemplateID:   poster.TemplateID,
+		TemplateID:   poster.PosterTemplateID,
 		BusinessName: poster.BusinessName,
 		PDFURL:       poster.PDFURL,
 		Status:       poster.Status,
 	}, nil
-}
-func (s *posterSubService) UpdatePoster(ctx context.Context, id uint, input *dto.PosterInput) error {
-	// Implementation for updating poster - currently returns nil
-	return nil
-}
-func (s *posterSubService) DeletePoster(ctx context.Context, id uint) error {
-	return s.repo.DeletePoster(ctx, id)
 }

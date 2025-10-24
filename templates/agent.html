@@ -4,22 +4,26 @@
     <meta charset="UTF-8">
     <title>M-Pesa Agent Poster</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&display=swap'); /* Keep original font */
 
-        /* --- THE DEFINITIVE MARGIN FIX --- */
+        /* --- Force Landscape via CSS --- */
         @page {
-            size: A4;
+            size: A4 landscape; /* Set landscape orientation */
             margin: 0;
         }
+        /* --- End @page --- */
+
+        /* --- Flexible size to adapt to @page rule --- */
         html, body {
-            width: 210mm;
-            height: 297mm;
+            width: 100%;
+            height: 100%;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', Arial, sans-serif;
+            font-family: 'Inter', Arial, sans-serif; /* Keep original font */
             background-color: #FFFFFF;
+            overflow: hidden; /* Prevent potential scrollbars */
         }
-        /* --- END FIX --- */
+        /* --- End Fix --- */
 
         * {
             box-sizing: border-box;
@@ -29,82 +33,85 @@
             width: 100%;
             height: 100%;
             display: flex;
-            flex-direction: column;
+            flex-direction: column; /* Keep original column layout */
         }
 
-        /* --- HEADER --- */
+        /* --- HEADER (Shrunk) --- */
         .header {
             background: #009933;
             text-align: center;
-            padding: 30px 20px;
+            padding: 20px 15px; /* Reduced padding */
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-shrink: 0;
         }
           .header-logo-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0px; /* Reduced gap for tighter logo */
+            gap: 0px;
             color: white;
         }
         .header-logo-container span {
-            font-size: 72px; /* Increased font size */
+            font-size: 60px; /* Reduced font size */
             font-weight: 800;
             letter-spacing: 1px;
         }
         .mpesa-icon-svg {
-            height: 65px; /* Increased icon size */
+            height: 50px; /* Reduced icon size */
             width: auto;
             position: relative;
-            margin: 0 -15px; /* Negative margin to pull text closer */
+            margin: 0 -10px; /* Adjusted margin */
         }
 
-        /* --- MAIN CONTENT --- */
+        /* --- MAIN CONTENT (Shrunk Spacing) --- */
         .content {
-            flex: 1;
+            flex-grow: 1;
             background-color: #FFFFFF;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px 30px;
+            justify-content: center; /* Center vertically now */
+            padding: 25px 20px; /* Reduced padding */
+            overflow: hidden;
         }
 
         .number-section-label {
-            font-size: 22px;
+            font-size: 18px; /* Reduced font size */
             font-weight: 700;
             color: #009933;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            margin-bottom: 10px;
+            margin-bottom: 8px; /* Reduced margin */
         }
 
         .number-boxes {
             display: flex;
             justify-content: center;
-            gap: 12px;
-            margin-bottom: 35px;
+            gap: 10px; /* Reduced gap */
+            margin-bottom: 25px; /* Reduced margin */
         }
-        
+
         .digit-box {
-            border: 3px solid #009933;
-            width: 80px;
-            height: 100px;
+            border: 2.5px solid #009933; /* Slightly thinner */
+            width: 70px;  /* Reduced width */
+            height: 90px; /* Reduced height */
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 68px;
+            font-size: 56px; /* Reduced font size */
             font-weight: 800;
             color: #333;
             border-radius: 6px;
         }
-        
+
         .agent-name-section {
             display: flex;
             align-items: stretch;
-            margin-top: 15px;
-            width: 90%;
-            max-width: 700px;
+            margin-top: 10px; /* Reduced margin */
+            width: 90%; /* Keep width */
+            max-width: 700px; /* Keep max-width */
         }
         .agent-name-label {
             background-color: #009933;
@@ -112,52 +119,58 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px 20px;
-            font-size: 18px;
+            padding: 10px 20px; /* Reduced padding */
+            font-size: 16px; /* Reduced font size */
             font-weight: 700;
             border-radius: 6px 0 0 6px;
-            border: 3px solid #009933;
+            border: 2.5px solid #009933;
             border-right: none;
             white-space: nowrap;
         }
         .agent-name-value {
             flex: 1;
-            border: 3px solid #009933;
+            border: 2.5px solid #009933;
             border-radius: 0 6px 6px 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 15px;
-            font-size: 28px;
+            padding: 10px; /* Reduced padding */
+            font-size: 26px; /* Reduced font size */
             font-weight: 700;
             color: #333;
             text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
-        /* --- FOOTER --- */
+        /* --- FOOTER (Shrunk Spacing & Text Logo) --- */
         .footer {
-            margin-top: auto; /* Pushes footer to the bottom */
-            padding: 25px;
+            margin-top: auto;
+            padding: 15px; /* Reduced padding */
             text-align: center;
             border-top: 2px solid #e0e0e0;
             width: 100%;
+            flex-shrink: 0;
         }
         .footer p {
-            font-size: 16px;
+            font-size: 14px; /* Reduced font size */
             font-weight: 500;
             color: #333;
-            margin-bottom: 12px;
+            margin-bottom: 8px; /* Reduced margin */
         }
         .footer .tagline {
             font-weight: 700;
         }
-      
+
          .safaricom-logo-container {
-            margin-top: 15px;
+            margin-top: 10px; /* Reduced margin */
         }
-        .safaricom-logo-image {
-            width: 180px;
-            height: auto;
+        /* Style for the text logo */
+        .safaricom-logo-text {
+            font-size: 24px; /* Adjust size as needed */
+            font-weight: 800;
+            color: #009933; /* Safaricom Green */
         }
     </style>
 </head>
@@ -165,14 +178,15 @@
     <div class="container">
         <div class="header">
               <div class="header-logo-container">
-                <span>LIPA NA M</span>
-                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 48 48" class="mpesa-icon-svg"> 
+                <span> M</span>
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 48 48" class="mpesa-icon-svg">
+                  
                     <path fill="#aed580" d="M31.003,7.001l-0.001-5.5c0-0.828,0.672-1.5,1.5-1.5 c0.828,0,1.5,0.672,1.5,1.5v5.5H31.003z"></path><path fill="#aed580" d="M14.964,47.999h18.073c0.533,0,0.965-0.432,0.965-0.965V4.964c0-0.533-0.432-0.965-0.965-0.965 H14.964c-0.533,0-0.965,0.432-0.965,0.965v42.07C13.999,47.567,14.431,47.999,14.964,47.999z"></path><path fill="#fff" fill-rule="evenodd" d="M17.739,29.001h12.524c0.962,0,1.741-0.78,1.741-1.741V10.743 c0-0.962-0.78-1.741-1.741-1.741H17.739c-0.962,0-1.741,0.78-1.741,1.741V27.26C15.997,28.222,16.777,29.001,17.739,29.001z" clip-rule="evenodd"></path><path fill="#9b2310" fill-rule="evenodd" d="M12.001,22.001 c3.643-0.7,5.865-2.448,7-5c1.135,2.552,3.357,4.3,7,5H12.001z" clip-rule="evenodd"></path><path fill="#e60023" fill-rule="evenodd" d="M12.001,22.001 c4.273,0.867,6.476,1,11,1c5.076,0,11.712-1.939,14-6l-9-4C24.039,18.139,21.863,22.001,12.001,22.001z" clip-rule="evenodd"></path>
                 </svg>
                 <span>PESA</span>
             </div>
         </div>
-        
+
         <div class="content">
             <div class="number-section-label">Agent Number</div>
             <div class="number-boxes">
@@ -180,26 +194,29 @@
                     <div class="digit-box">{{.}}</div>
                 {{end}}
             </div>
-            
+
+
             <div class="number-section-label">Store Number</div>
             <div class="number-boxes">
                 {{range .store_numberSplit}}
                     <div class="digit-box">{{.}}</div>
                 {{end}}
             </div>
-            
+
             <div class="agent-name-section">
                 <div class="agent-name-label">AGENT NAME</div>
                 <div class="agent-name-value">{{.agent_name}}</div>
             </div>
         </div>
-        
+
         <div class="footer">
             <p>Use mySafaricom App or dial *234#</p>
             <p class="tagline">Simple • Transparent • Honest</p>
             <p>FOR YOU</p>
-          <div class="safaricom-logo-container">
-                <img class="safaricom-logo-image" src="https://www.logo.wine/a/logo/Safaricom/Safaricom-Logo.wine.svg" alt="Safaricom Logo">
+
+            <div class="safaricom-logo-container">
+                <!-- Reverted to styled text -->
+                <div class="safaricom-logo-text">Safaricom</div>
               </div>
         </div>
     </div>

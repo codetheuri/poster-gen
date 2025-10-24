@@ -7,64 +7,65 @@ import (
 	"gorm.io/gorm"
 )
 
-// PosterTemplateSubRepository interface for template operations
-type PosterTemplateSubRepository interface {
+
+type PosterTemplateRepository interface {
 	CreateTemplate(ctx context.Context, template *models.PosterTemplate) error
 	GetTemplateByID(ctx context.Context, id uint) (*models.PosterTemplate, error)
 	GetActiveTemplates(ctx context.Context) ([]*models.PosterTemplate, error)
 	UpdateTemplate(ctx context.Context, template *models.PosterTemplate) error
 	DeleteTemplate(ctx context.Context, id uint) error
+	// Add GetTemplateByName if needed
 }
 
-
-type posterTemplateSubRepository struct {
+type posterTemplateRepository struct {
 	db  *gorm.DB
 	log logger.Logger
 }
 
-// NewPosterTemplateSubRepository constructor
-func NewPosterTemplateSubRepository(db *gorm.DB, log logger.Logger) PosterTemplateSubRepository {
-	return &posterTemplateSubRepository{
-		db:  db,
-		log: log,
+func NewPosterTemplateRepository(db *gorm.DB, log logger.Logger) PosterTemplateRepository {
+	return &posterTemplateRepository{db: db, log: log}
+}
+
+func (r *posterTemplateRepository) CreateTemplate(ctx context.Context, template *models.PosterTemplate) error {
+	if err := r.db.WithContext(ctx).Create(template).Error; err != nil {
+		r.log.Error("Failed to create template", err, "template_name", template.Name)
+		return err
 	}
+	return nil
 }
 
-func (r *posterTemplateSubRepository) CreateTemplate(ctx context.Context, template *models.PosterTemplate) error {
-	r.log.Info("Creating poster template", "name", template.Name)
-	return r.db.WithContext(ctx).Create(template).Error
-}
-
-func (r *posterTemplateSubRepository) GetTemplateByID(ctx context.Context, id uint) (*models.PosterTemplate, error) {
-	r.log.Info("Getting poster template by ID", "id", id)
+func (r *posterTemplateRepository) GetTemplateByID(ctx context.Context, id uint) (*models.PosterTemplate, error) {
 	var template models.PosterTemplate
-	err := r.db.WithContext(ctx).First(&template, id).Error
-	if err != nil {
-		r.log.Error("Failed to get template by ID", err, "id", id)
+	// Use Preload to fetch the associated Layout data automatically
+	if err := r.db.WithContext(ctx).Preload("Layout").First(&template, id).Error; err != nil {
+		r.log.Error("Failed to get template by ID", err, "template_id", id)
 		return nil, err
 	}
 	return &template, nil
 }
 
-func (r *posterTemplateSubRepository) GetActiveTemplates(ctx context.Context) ([]*models.PosterTemplate, error) {
-	r.log.Info("Getting active poster templates")
+func (r *posterTemplateRepository) GetActiveTemplates(ctx context.Context) ([]*models.PosterTemplate, error) {
 	var templates []*models.PosterTemplate
-	err := r.db.WithContext(ctx).Where("is_active = ?", true).Find(&templates).Error
-	if err != nil {
+	// Use Preload here as well if you need Layout info in the list
+	if err := r.db.WithContext(ctx).Preload("Layout").Where("is_active = ?", true).Find(&templates).Error; err != nil {
 		r.log.Error("Failed to get active templates", err)
 		return nil, err
 	}
 	return templates, nil
 }
 
-func (r *posterTemplateSubRepository) UpdateTemplate(ctx context.Context, template *models.PosterTemplate) error {
-	r.log.Info("Updating poster template", "id", template.ID)
-	// return r.db.WithContext(ctx).Save(template).Error
-       return r.db.WithContext(ctx).Model(&models.PosterTemplate{}).Where("id = ?", template.ID).Updates(template).Error	
-// 
+func (r *posterTemplateRepository) UpdateTemplate(ctx context.Context, template *models.PosterTemplate) error {
+	if err := r.db.WithContext(ctx).Save(template).Error; err != nil {
+		r.log.Error("Failed to update template", err, "template_id", template.ID)
+		return err
+	}
+	return nil
 }
 
-func (r *posterTemplateSubRepository) DeleteTemplate(ctx context.Context, id uint) error {
-	r.log.Info("Deleting poster template", "id", id)
-	return r.db.WithContext(ctx).Delete(&models.PosterTemplate{}, id).Error
+func (r *posterTemplateRepository) DeleteTemplate(ctx context.Context, id uint) error {
+	if err := r.db.WithContext(ctx).Delete(&models.PosterTemplate{}, id).Error; err != nil {
+		r.log.Error("Failed to delete template", err, "template_id", id)
+		return err
+	}
+	return nil
 }

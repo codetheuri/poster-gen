@@ -1,56 +1,48 @@
 package repositories
 
 import (
-    "context"
-    "github.com/codetheuri/poster-gen/internal/app/posters/models"
-    "github.com/codetheuri/poster-gen/pkg/logger"
-    "gorm.io/gorm"
+	"context"
+
+	"github.com/codetheuri/poster-gen/internal/app/posters/models"
+	"github.com/codetheuri/poster-gen/pkg/logger"
+	"gorm.io/gorm"
 )
 
-// PosterSubRepository interface for poster operations
+// PosterRepository defines the interface for poster data operations.
+// Renamed from PosterSubRepository.
 type PosterSubRepository interface {
-    CreatePoster(ctx context.Context, poster *models.Poster) error
-    GetPosterByID(ctx context.Context, id uint) (*models.Poster, error)
-    UpdatePoster(ctx context.Context, poster *models.Poster) error
-    DeletePoster(ctx context.Context, id uint) error
-    // Add more as needed, e.g., GetPostersByUserID, GetPostersByOrderID
+	CreatePoster(ctx context.Context, poster *models.Poster) error
+	GetPosterByID(ctx context.Context, id uint) (*models.Poster, error)
+	// Add other methods as needed (Update, Delete, ListByUser, etc.)
 }
 
-type posterSubRepository struct {
-    db  *gorm.DB
-    log logger.Logger
+type posterRepository struct {
+	db  *gorm.DB
+	log logger.Logger
 }
 
-// NewPosterSubRepository constructor
+// NewPosterRepository creates a new PosterRepository.
+// Renamed from NewPosterSubRepository.
 func NewPosterSubRepository(db *gorm.DB, log logger.Logger) PosterSubRepository {
-    return &posterSubRepository{
-        db:  db,
-        log: log,
-    }
+	return &posterRepository{db: db, log: log}
 }
 
-func (r *posterSubRepository) CreatePoster(ctx context.Context, poster *models.Poster) error {
-    r.log.Info("Creating poster", "business_name", poster.BusinessName, "user_id", poster.UserID)
-    return r.db.WithContext(ctx).Create(poster).Error
+func (r *posterRepository) CreatePoster(ctx context.Context, poster *models.Poster) error {
+	if err := r.db.WithContext(ctx).Create(poster).Error; err != nil {
+		r.log.Error("Failed to create poster", err)
+		return err
+	}
+	return nil
 }
 
-func (r *posterSubRepository) GetPosterByID(ctx context.Context, id uint) (*models.Poster, error) {
-    r.log.Info("Getting poster by ID", "id", id)
-    var poster models.Poster
-    err := r.db.WithContext(ctx).First(&poster, id).Error
-    if err != nil {
-        r.log.Error("Failed to get poster by ID", err, "id", id)
-        return nil, err
-    }
-    return &poster, nil
+func (r *posterRepository) GetPosterByID(ctx context.Context, id uint) (*models.Poster, error) {
+	var poster models.Poster
+	// Preload related data if needed when retrieving a specific poster
+	if err := r.db.WithContext(ctx).Preload("PosterTemplate.Layout").First(&poster, id).Error; err != nil {
+		r.log.Error("Failed to get poster by ID", err, "poster_id", id)
+		return nil, err
+	}
+	return &poster, nil
 }
 
-func (r *posterSubRepository) UpdatePoster(ctx context.Context, poster *models.Poster) error {
-    r.log.Info("Updating poster", "id", poster.ID)
-    return r.db.WithContext(ctx).Save(poster).Error
-}
-
-func (r *posterSubRepository) DeletePoster(ctx context.Context, id uint) error {
-    r.log.Info("Deleting poster", "id", id)
-    return r.db.WithContext(ctx).Delete(&models.Poster{}, id).Error
-}
+// Add UpdatePoster, DeletePoster implementations if needed
